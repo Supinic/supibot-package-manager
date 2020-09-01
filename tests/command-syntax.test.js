@@ -7,6 +7,60 @@
 			const { strictEqual: equal } = require("assert");
 			const commandFiles = await fs.readdir("./commands");
 			const commands = await Promise.all(commandFiles.map(dir => fs.readFile(`./commands/${dir}/index.js`)));
+			const allowedProperties = [
+				{
+					name: "Name",
+					failMessage: "non-empty string",
+					checkCallback: (v) => (
+						(v.type === "Literal")
+						&& (typeof v.value === "string")
+						&& (v.value.length > 0)
+					)
+				},
+				{
+					name: "Aliases",
+					failMessage: "Array of string Literals, or null Literal",
+					checkCallback: (v) => (
+						(v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string"))
+						|| (v.type === "Literal" && v.value === null)
+					)
+				},
+				{ name: "Description", valueKind: "Literal", valueTypes: ["string", "null"] },
+				{ name: "Cooldown", valueKind: "Literal", valueTypes: ["number"] },
+				{
+					name: "Flags",
+					failMessage: "Object of string Literal keys and boolean Literal values, or null Literal",
+					checkCallback: (v) => (
+						(v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "boolean"))
+						|| (v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string"))
+						|| (v.type === "Literal" && v.value === null)
+					)
+				},
+				{ name: "Source", valueKind: "Literal", valueTypes: ["string"] },
+				{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
+				{
+					name: "Code",
+					failMessage: "non-generator FunctionExpression or ArrowFunctionExpression",
+					checkCallback: (v) => (
+						(v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
+						&& v.generator === false
+						&& (typeof v.method !== "boolean" || v.method === false)
+					)
+				},
+				{
+					name: "Static_Data",
+					failMessage: "null literal, object expression, non-generator FunctionExpression or ArrowFunctionExpression",
+					checkCallback: (v) => (
+						(v.type === "Literal" && v.value === null)
+						|| (v.type === "ObjectExpression")
+						|| (
+							(v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
+							&& v.generator === false
+							&& (typeof v.method !== "boolean" || v.method === false)
+						)
+					)
+				}
+			];
 
 			for (const content of commands) {
 				const model = espree.parse(content, {
@@ -31,35 +85,9 @@
 				equal(left.property.name, "exports", "Assignment must be done to module.exports");
 				equal(right.type, "ObjectExpression", "Right side of assignment must be an object expression");
 
+				const foundProperties = new Set();
 				const { properties } = model.body[0].expression.right;
 				const getType = (value) => (value === null) ? "null" : typeof value;
-				const allowedProperties = [
-					{ name: "Name", valueKind: "Literal", valueTypes: ["string"] },
-					{
-						name: "Aliases",
-						failMessage: "Array of string Literals, or null Literal",
-						checkCallback: (v) => ((v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string")) || (v.type === "Literal" && v.value === null))
-					},
-					{ name: "Description", valueKind: "Literal", valueTypes: ["string", "null"] },
-					{ name: "Cooldown", valueKind: "Literal", valueTypes: ["number"] },
-					{
-						name: "Flags",
-						failMessage: "Object of string Literal keys and boolean Literal values, or null Literal",
-						checkCallback: (v) => ((v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "boolean")) || (v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string")) || (v.type === "Literal" && v.value === null))
-					},
-					{ name: "Source", valueKind: "Literal", valueTypes: ["string"] },
-					{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
-					{
-						name: "Code",
-						failMessage: "non-generator FunctionExpression or ArrowFunctionExpression",
-						checkCallback: (v) => ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false))
-					},
-					{
-						name: "Static_Data",
-						failMessage: "null literal, object expression, non-generator FunctionExpression or ArrowFunctionExpression",
-						checkCallback: (v) => ((v.type === "Literal" && v.value === null) || (v.type === "ObjectExpression") || ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false)))
-					}
-				];
 
 				for (const item of properties) {
 					if (item.computed === true) {
@@ -88,6 +116,18 @@
 					else if (typeof found.checkCallback === "function" && !found.checkCallback(item.value)) {
 						throw new Error(`property ${item.key.name} must be ${found.failMessage}`)
 					}
+
+					if (foundProperties.has(found.name)) {
+						throw new Error(`Duplicate property ${found.name}`);
+					}
+					else {
+						foundProperties.add(found.name);
+					}
+				}
+
+				const missingProperties = allowedProperties.filter(i => !foundProperties.has(i.name));
+				if (missingProperties.length !== 0) {
+					throw new Error(`Missing properties: ${missingProperties.map(i => i.name).join(", ")}`);
 				}
 			}
 		});
