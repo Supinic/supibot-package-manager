@@ -36,7 +36,8 @@
 						|| (v.type === "Literal" && v.value === null)
 					)
 				},
-				{ name: "Source", valueKind: "Literal", valueTypes: ["string"] },
+				{ name: "Author", valueKind: "Literal", valueTypes: ["string", "null"] },
+				{ name: "Last_Edit", valueKind: "Literal", valueTypes: ["string"] },
 				{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
 				{
 					name: "Code",
@@ -59,14 +60,32 @@
 							&& (typeof v.method !== "boolean" || v.method === false)
 						)
 					)
-				}
+				},
+                                {
+                                        name: "Dynamic_Description",
+                                        failMessage: "null literal, non-generator FunctionExpression or ArrowFunctionExpression",
+                                        checkCallback: (v) => (
+                                                (v.type === "Literal" && v.value === null)
+	                                        || (
+                                                        (v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
+                                                        && v.generator === false
+                                                        && (typeof v.method !== "boolean" || v.method === false)
+                                                )
+                                        )
+                                }
 			];
 
 			for (const content of commands) {
-				const model = espree.parse(content, {
-					ecmaVersion: 12,
-					sourceType: "module"
-				});
+				let model = null;
+				try {
+					model = espree.parse(content, {
+						ecmaVersion: 12,
+						sourceType: "module"
+					});
+				}
+				catch (e) {
+					throw new Error("Parsing of command failed\n\n" + content + "\n\n" + e.toString());
+				}
 
 				equal(model.type, "Program", "Module must be a program");
 				equal(model.sourceType, "module", "Script must be sourced by a module");
