@@ -1,86 +1,59 @@
-(async () => {
-	const fs = require("fs/promises");
-	const espree = require("espree");
+const fs = require("fs");
+const acorn = require("acorn-node");
+const { strictEqual: equal } = require("assert");
 
-	describe("all commands", () => {
-		it("should have proper structure", async () => {
-			const { strictEqual: equal } = require("assert");
-			const commandFiles = await fs.readdir("./commands");
-			const commands = await Promise.all(commandFiles.map(dir => fs.readFile(`./commands/${dir}/index.js`)));
-			const allowedProperties = [
-				{
-					name: "Name",
-					failMessage: "non-empty string",
-					checkCallback: (v) => (
-						(v.type === "Literal")
-						&& (typeof v.value === "string")
-						&& (v.value.length > 0)
-					)
-				},
-				{
-					name: "Aliases",
-					failMessage: "Array of string Literals, or null Literal",
-					checkCallback: (v) => (
-						(v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string"))
-						|| (v.type === "Literal" && v.value === null)
-					)
-				},
-				{ name: "Description", valueKind: "Literal", valueTypes: ["string", "null"] },
-				{ name: "Cooldown", valueKind: "Literal", valueTypes: ["number"] },
-				{
-					name: "Flags",
-					failMessage: "Object of string Literal keys and boolean Literal values, or null Literal",
-					checkCallback: (v) => (
-						(v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "boolean"))
-						|| (v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string"))
-						|| (v.type === "Literal" && v.value === null)
-					)
-				},
-				{ name: "Author", valueKind: "Literal", valueTypes: ["string", "null"] },
-				{ name: "Last_Edit", valueKind: "Literal", valueTypes: ["string"] },
-				{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
-				{
-					name: "Code",
-					failMessage: "non-generator FunctionExpression or ArrowFunctionExpression",
-					checkCallback: (v) => (
-						(v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
-						&& v.generator === false
-						&& (typeof v.method !== "boolean" || v.method === false)
-					)
-				},
-				{
-					name: "Static_Data",
-					failMessage: "null literal, object expression, non-generator FunctionExpression or ArrowFunctionExpression",
-					checkCallback: (v) => (
-						(v.type === "Literal" && v.value === null)
-						|| (v.type === "ObjectExpression")
-						|| (
-							(v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
-							&& v.generator === false
-							&& (typeof v.method !== "boolean" || v.method === false)
-						)
-					)
-				},
-                                {
-                                        name: "Dynamic_Description",
-                                        failMessage: "null literal, non-generator FunctionExpression or ArrowFunctionExpression",
-                                        checkCallback: (v) => (
-                                                (v.type === "Literal" && v.value === null)
-	                                        || (
-                                                        (v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
-                                                        && v.generator === false
-                                                        && (typeof v.method !== "boolean" || v.method === false)
-                                                )
-                                        )
-                                }
-			];
+describe("global command suite", function ()  {
+	const allowedProperties = [
+		{
+			name: "Name",
+			failMessage: "non-empty string",
+			checkCallback: (v) => ((v.type === "Literal") && (typeof v.value === "string") && (v.value.length > 0))
+		},
+		{
+			name: "Aliases",
+			failMessage: "Array of string Literals, or null Literal",
+			checkCallback: (v) => ((v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string")) || (v.type === "Literal" && v.value === null))
+		},
+		{ name: "Description", valueKind: "Literal", valueTypes: ["string", "null"] },
+		{ name: "Cooldown", valueKind: "Literal", valueTypes: ["number"] },
+		{
+			name: "Flags",
+			failMessage: "Object of string Literal keys and boolean Literal values, or null Literal",
+			checkCallback: (v) => ((v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "boolean")) || (v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string")) || (v.type === "Literal" && v.value === null))
+		},
+		{ name: "Author", valueKind: "Literal", valueTypes: ["string", "null"] },
+		{ name: "Last_Edit", valueKind: "Literal", valueTypes: ["string"] },
+		{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
+		{
+			name: "Code",
+			failMessage: "non-generator FunctionExpression or ArrowFunctionExpression",
+			checkCallback: (v) => ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false))
+		},
+		{
+			name: "Static_Data",
+			failMessage: "null literal, object expression, non-generator FunctionExpression or ArrowFunctionExpression",
+			checkCallback: (v) => ((v.type === "Literal" && v.value === null) || (v.type === "ObjectExpression") || ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false)))
+		},
+		{
+			name: "Dynamic_Description",
+			failMessage: "null literal, non-generator FunctionExpression or ArrowFunctionExpression",
+			checkCallback: (v) => ((v.type === "Literal" && v.value === null) || ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false)))
+		}
+	];
 
-			for (const content of commands) {
+	const commandFiles = fs.readdirSync("./commands");
+	const commands = commandFiles.map(dir => ({
+		content: fs.readFileSync(`./commands/${dir}/index.js`),
+		name: dir
+	}));
+
+	describe("commands structure", function () {
+		for (const { content, name } of commands) {
+			it(`${name} - structure`, function () {
 				let model = null;
 				try {
-					model = espree.parse(content, {
-						ecmaVersion: 12,
-						sourceType: "module"
+					model = acorn.parse(content, {
+						ecmaVersion: 2020, sourceType: "module"
 					});
 				}
 				catch (e) {
@@ -146,9 +119,10 @@
 
 				const missingProperties = allowedProperties.filter(i => !foundProperties.has(i.name));
 				if (missingProperties.length !== 0) {
-					throw new Error(`Missing properties: ${missingProperties.map(i => i.name).join(", ")}`);
+					throw new Error(`Missing properties: ${missingProperties.map(i => i.name)
+						.join(", ")}`);
 				}
-			}
-		});
+			});
+		}
 	});
-})();
+});

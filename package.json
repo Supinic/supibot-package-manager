@@ -3,7 +3,7 @@
     "test": "mocha ./tests/command-syntax.test.js"
   },
   "devDependencies": {
-    "mocha": "latest",
-    "espree": "^7.3.0"
+    "acorn-node": "^2.0.1",
+    "mocha": "latest"
   }
 }
