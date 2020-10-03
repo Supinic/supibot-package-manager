@@ -91,7 +91,7 @@ module.exports = {
 			}
 	
 			return {
-				reply: `${who} eaten ${total} cookies so far. Out of those, ${cookies.Received} were gifted to ${target}${voidString}. ${giftedString} ${reaction} ❗ This command will soon be archived. Use => $stats cc`
+				reply: `${who} eaten ${total} cookies so far. Out of those, ${cookies.Received} were gifted to ${target}${voidString}. ${giftedString} ${reaction} ❗ This command will soon be archived. Use => "$stats cc\tcc (user)" based on the current invocation, with the user included.` 
 			};
 		}
 	}),
