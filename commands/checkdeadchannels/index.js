@@ -8,7 +8,7 @@ module.exports = {
 	Flags: ["pipe","skip-banphrase","system","whitelist"],
 	Whitelist_Response: null,
 	Static_Data: null,
-	Code: (async function checkdeadchannels () {
+	Code: (async function checkDeadChannels () {
 		const promises = [];
 		const regex = /^[^:]+$/;
 		const channels = sb.Channel.data.filter(channel => (
