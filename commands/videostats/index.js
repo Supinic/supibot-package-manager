@@ -8,7 +8,7 @@ module.exports = {
 	Flags: ["mention","pipe","whitelist"],
 	Whitelist_Response: "Video statistics are only available in Cytube rooms.",
 	Static_Data: null,
-	Code: async (extra, link) => {
+	Code: (async function videostats (extra, link) {
 		if (!link) {
 			return { reply: "No link provided!", meta: { skipCooldown: true } };
 		}
@@ -54,6 +54,6 @@ module.exports = {
 		return {
 			reply: `That video was queued ${total} times before (mostly by: ${top5.join("; ")}). Last time it was queued ${sb.Utils.timeDelta(lastPlayedData.Posted)}, by ${lastPlayedData.Name}`
 		};
-	},
+	}),
 	Dynamic_Description: null
 };
