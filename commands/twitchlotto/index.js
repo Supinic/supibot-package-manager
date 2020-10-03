@@ -125,7 +125,8 @@ module.exports = {
 						reply: `This image has been deleted from its host! Try again.`,
 						cooldown: 2500
 					};
-				} else {
+				}
+				else {
 					// Try another image.
 					continue;
 				}
@@ -151,7 +152,8 @@ module.exports = {
 							success: false,
 							reply: `Image is no longer available! https://i.imgur.com/${image.Link}`
 						};
-					} else {
+					}
+					else {
 						// Try another image.
 						continue;
 					}
