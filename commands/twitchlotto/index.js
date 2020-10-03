@@ -85,7 +85,7 @@ module.exports = {
 		// Now try to find an image that is available.
 		let image = null;
 		let failedTries = 0;
-		while (true) {
+		while (image === null) {
 			if (channel) {
 				const roll = sb.Utils.random(1, this.data.counts[channel]) - 1;
 				image = await sb.Query.getRecordset(rs => rs
@@ -118,18 +118,9 @@ module.exports = {
 			}
 
 			if (image.Available === false) {
+				// discard this image. Loop will continue.
 				failedTries++;
-				if (failedTries > this.staticData.maxRetries) {
-					return {
-						success: false,
-						reply: `This image has been deleted from its host! Try again.`,
-						cooldown: 2500
-					};
-				}
-				else {
-					// Try another image.
-					continue;
-				}
+				image = null;
 			}
 			else if (image.Available === null) {
 				const { statusCode } = await sb.Got({
@@ -146,22 +137,21 @@ module.exports = {
 						.where("Link = %s", image.Link)
 					);
 
+					// discard this image. Loop will continue.
 					failedTries++;
-					if (failedTries > this.staticData.maxRetries) {
-						return {
-							success: false,
-							reply: `Image is no longer available! https://i.imgur.com/${image.Link}`
-						};
-					}
-					else {
-						// Try another image.
-						continue;
-					}
+					image = null;
 				}
 			}
 
-			// Success: break loop and use that image
-			break;
+			if (failedTries > this.staticData.maxRetries) {
+				// Was not able to find an image that existed.
+				return {
+					success: false,
+					reply: `Could not find an image that was still available (${this.staticData.maxRetries} images were checked and found to be deleted)!`,
+					cooldown: 2500
+				};
+			}
+			// Success: image is not null, and loop will terminate.
 		}
 	
 		if (image.Score === null) {
