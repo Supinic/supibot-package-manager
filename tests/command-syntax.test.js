@@ -31,8 +31,8 @@ describe("global command suite", function ()  {
 		},
 		{
 			name: "Static_Data",
-			failMessage: "null literal, object expression, non-generator FunctionExpression or ArrowFunctionExpression",
-			checkCallback: (v) => ((v.type === "Literal" && v.value === null) || (v.type === "ObjectExpression") || ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false)))
+			failMessage: "null literal, non-generator FunctionExpression or ArrowFunctionExpression",
+			checkCallback: (v) => ((v.type === "Literal" && v.value === null) || ((v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression") && v.generator === false && (typeof v.method !== "boolean" || v.method === false)))
 		},
 		{
 			name: "Dynamic_Description",
