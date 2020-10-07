@@ -22,7 +22,6 @@ describe("global command suite", function ()  {
 			checkCallback: (v) => ((v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "boolean")) || (v.type === "ArrayExpression" && v.elements.every(i => i.type === "Literal" && typeof i.value === "string")) || (v.type === "Literal" && v.value === null))
 		},
 		{ name: "Author", valueKind: "Literal", valueTypes: ["string", "null"] },
-		{ name: "Last_Edit", valueKind: "Literal", valueTypes: ["string"] },
 		{ name: "Whitelist_Response", valueKind: "Literal", valueTypes: ["string", "null"] },
 		{
 			name: "Code",
