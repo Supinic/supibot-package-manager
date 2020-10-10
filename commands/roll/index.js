@@ -78,13 +78,14 @@ class Parser {
         return this.#tokens[this.#pointer - 1];
     }
 
+    /** Returns the current value and advances the token list pointer. */
     #advance() {
         this.#pointer += 1;
         return this.#previous;
     }
 
     /**
-     * Recursively parses the token list, transforming it into reverse polish notation (https://en.wikipedia.org/wiki/Reverse_Polish_notation)
+     * Recursively parses the token list, transforming it into reverse polish notation (https://en.wikipedia.org/wiki/Reverse_Polish_notation).
      *
      * @returns {string[]} Instructions in reverse polish notation
      * @throws {Error} Error that is definitely descriptive enough
@@ -96,26 +97,36 @@ class Parser {
         // parsed already. 
         const insts = this.#parse_binary0();
         if (this.#pointer < this.#tokens.length) {
-            // Could not parse the entire token list, which means there were either extra or not enough tokens.
-            // This is a user error.
-            throw new Error(`FeelsDankMan you did something wrong.`);
+            // Could not parse the entire token list, which means there were either extra or not enough tokens, such as in the case
+            // ["5", "1", "3", "+"]
+            throw new Error(`Could not parse entire token list.`);
         }
         return insts;
     }
 
-    // binary operators with precedence 0 (+, -)
+    /** binary operators with precedence 0: "+", "-" */
     #parse_binary0() {
+        // this is what "operator precedence is built into the function" means
+        // the first step in any of these parsing functions is to try and parse
+        // a higher precedence token kind
+        // the parser basically just re-orders the tokens, which is what is happening here
+        // parse the left sub-expression first (the "5" in ["5", "+", "1"])
         let left = this.#parse_binary1();
         while (["+", "-"].includes(this.#current)) {
+            // if the current token is "+" or "-", grab it
             const op = this.#advance();
+            // and then parse the right side 
             const right = this.#parse_binary1();
+            // and finally, store the result in RPN
+            // e.g. ["5", "+", "1"] will get parsed as ["5", "1", "+"]
             left = [...left, ...right, op];
         }
         return left;
     }
 
-    // binary operators with precedence 1 (*, /)
+    /** binary operators with precedence 1: "*", "/" */
     #parse_binary1() {
+        // doing the same thing as above
         let left = this.#parse_unary();
         while (["*", "/"].includes(this.#current)) {
             const op = this.#advance();
@@ -125,17 +136,26 @@ class Parser {
         return left;
     }
 
-    // unary operators (+, -)
+    /** unary operators: "+", "-" */
     #parse_unary() {
+        // we only have to do something if the unary operator is "-"
         if (this.#current === "-") {
             this.#advance();
+            // in which case we output a special negation operator, "~"
+            // this is a solution to the ambiguity between 
+            // binary operator "-" and unary operator "-"
             return [...this.#parse_dice(), "~"];
         }
         return this.#parse_dice();
     }
 
-    // dice operator (d)
+    /** dice operator: "d" */
     #parse_dice() {
+        // the dice operator is in the form "AdX",
+        // which will cause an X-sided dice to be rolled A times
+        // it's a binary operator, so it's parsed the same way as binary1 and binary0
+        // because it's the highest precedence operator, the only higher precedence
+        // thing we can do is parse a terminal value
         let left = this.#parse_terminal();
         if (this.#current === "d") {
             this.#advance();
@@ -145,9 +165,13 @@ class Parser {
         return left;
     }
 
-    // terminal value (parentheses or numbers)
+    /** terminal value: an expression in parentheses, or a number */
     #parse_terminal() {
+        // try to parse parentheses first
         if (this.#current === "(") {
+            // if find it, treat the inside as a sub-expression
+            // here we recurse and start parsing the next token again from binary0
+            // until we eventually hit a ")" character
             this.#advance();
             const expr = this.#parse_binary0();
             if (this.#current != ")") {
@@ -155,9 +179,11 @@ class Parser {
             }
             this.#advance();
             return expr;
-        } else if (this.#current !== undefined && !Number.isNaN(Number(this.#current))) {
+        } else if (!Number.isNaN(Number(this.#current))) {
+            // if we find a non-NaN token, then return it directly
             return [Number(this.#advance())];
         } else {
+            // if we find anything else, it's an error
             if (this.#current === undefined) {
                 throw new Error(`Expected token after ${this.#previous}, got none`);
             } else {
@@ -178,6 +204,9 @@ function roll_dice(times, sides) {
     return sum;
 }
 
+/**
+ * This is a part of the interpreter's bytecode handler table which holds all binary operators
+ */
 const bin_ops = {
     "+": (left, right) => left + right,
     "-": (left, right) => left - right,
@@ -186,12 +215,14 @@ const bin_ops = {
     "d": (left, right) => roll_dice(left, right)
 }
 
+/** This is a part of the interpreter's bytecode handler table which holds all unary operators */
 const un_ops = {
     "~": (value) => -value,
 }
 
 /**
- * This is a stack-based "bytecode interpreter", which interprets reverse polish notation (https://en.wikipedia.org/wiki/Reverse_Polish_notation)
+ * This is a stack-based interpreter, which interprets reverse polish notation (https://en.wikipedia.org/wiki/Reverse_Polish_notation)
+ * similarly to a bytecode virtual machine.
  * 
  * @param {string[]} insts Instructions in reverse polish notation
  */
@@ -200,28 +231,27 @@ function evaluate(insts) {
     let stack = [];
     // instruction pointer
     let ip = 0;
-    // while we have instructions left
+    // go through each token in the RPN,
     while (ip < insts.length) {
-        // grab the next instruction
         const inst = insts[ip++];
-        // check if it's an operator
+        // check if it's a binary operator,
         if (inst in bin_ops) {
             // if it is, pop the right and left values off the stack (hence the "reverse" in reverse polish notation)
             const right = stack.pop();
             const left = stack.pop();
             // apply the operation to them, and push the result onto the stack
             stack.push(bin_ops[inst](left, right));
+        // check if it's a unary operator
         } else if (inst in un_ops) {
+            // pop a single value off the stack, apply the operator to it, and push it back onto the stack
             const value = stack.pop();
             stack.push(un_ops[inst](value));
         } else {
-            // otherwise, we have a value, push it onto the stack
+            // otherwise, we have a value, directly push it onto the stack
             stack.push(inst);
         }
     }
-    // This should be a programmer error
-    if (stack.length !== 1) throw new Error(`monkaS Something went horribly wrong`);
-    // At the end, we're left with a single value, which is the final result
+    // And here is our result
     return stack.pop();
 }
 
