@@ -1,26 +1,35 @@
 
 /*
+    The Tokenizer, Parser and Interpeter should be pretty robust, but just in case,
+    here are some possible invalid expressions:
 
-The Tokenizer, Parser and Interpeter should be pretty robust, but just in case,
-here are some possible test values:
+    "(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((("
+        -> Expected token after (, got none
+    "5d-"
+        -> Unexpected token - after d
+    ""
+        -> No tokens to parse
+    "+"
+        -> Unexpected token + after undefined
+    "3d10)"
+        -> Could not parse entire token list.
 
-"(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((("
-    -> Expected token after (, got none
+    and here are some valid expressions:
 
-"((14+14d37)+(((45-45d62)-(32-32d56))*(((19-19d22)+((37*37d66)-((29*11)/(48-48d54))))-((((14/8)*(91+3))+((17/17d17)*(69-69d100)))*(((44*10)-(85-5))*((76+1)-(55-8)))))))"
-    -> Valid result
-
-"((((((44-10)-(86/11))d((28d3)*(86d9)))d(((98d2)/(86d3))+((99d8)/(71+11))))d((((20d8)d(52+10))/((98d6)/(4-9)))/(((26/3)*(19/1))+((98d11)+(80d5)))))/(((((77*10)+(80*10))+((2*7)d(25+10)))/(((56-7)+(95-4))d((32+4)-(79*9))))d((((71+8)/(60/1))d((7-11)+(21d11)))+(((37-2)*(65*10))/((12d1)-(35-2))))))" 
-    -> Infinity
-
-"5d-"
-    -> Unexpected token - after d
-
-""
-    -> No tokens to parse
-
-"+"
-    -> Unexpected token + after undefined
+    "d5" 
+        -> rolls 5-sided die once
+    "-d5"
+        -> rolls 5-sided die once, then negates the result
+    "10d6 + 20"
+        -> rolls 10-sided die 10 times, then adds 20 to the result
+    "(50* 50)d( 10 +10 )"
+        -> rolls a (10+10)-sided die (50*50) times
+    // these two are generated through fuzzing
+    "((14+14d37)+(((45-45d62)-(32-32d56))*(((19-19d22)+((37*37d66)-((29*11)/(48-48d54))))-((((14/8)*(91+3))+((17/17d17)*(69-69d100)))*(((44*10)-(85-5))*((76+1)-(55-8)))))))"
+        -> returns some large (>9 digits) negative integer
+    "((((((44-10)-(86/11))d((28d3)*(86d9)))d(((98d2)/(86d3))+((99d8)/(71+11))))d((((20d8)d(52+10))/((98d6)/(4-9)))/(((26/3)*(19/1))+((98d11)+(80d5)))))/(((((77*10)+(80*10))+((2*7)d(25+10)))/(((56-7)+(95-4))d((32+4)-(79*9))))d((((71+8)/(60/1))d((7-11)+(21d11)))+(((37-2)*(65*10))/((12d1)-(35-2))))))" 
+        -> returns Infinity
+        -> maybe this should be an error case, too?
 
 */
 
