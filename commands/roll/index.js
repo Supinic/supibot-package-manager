@@ -152,7 +152,7 @@ class Parser {
 
     /** dice operator: "AdX" */
     #parse_binary_dice() {
-        // the dice operator is in the form "AdX",
+        // the binary dice operator is in the form "AdX",
         // which will cause an X-sided dice to be rolled A times
         // it's a binary operator, so it's parsed the same way as binary1 and binary0
         // because it's the highest precedence operator, the only higher precedence
@@ -161,16 +161,18 @@ class Parser {
         if (this.#current === "d") {
             this.#advance();
             const right = this.#parse_unary_dice();
-            left = [...left, ...right, "bd"];
+            left = [...left, ...right, "d"];
         }
         return left;
     }
 
     /** unary dice operator: "dX" */
     #parse_unary_dice() {
+        // unary dice operator is in the form "dX", and it's
+        // treated the same as the binary operator, except it
         if (this.#current === "d") {
             this.#advance();
-            return [...this.#parse_terminal(), "ud"];
+            return [1, ...this.#parse_terminal(), "d"];
         }
         return this.#parse_terminal();
     }
@@ -222,13 +224,12 @@ const bin_ops = {
     "-": (left, right) => left - right,
     "*": (left, right) => left * right,
     "/": (left, right) => left / right,
-    "bd": (left, right) => roll_dice(left, right)
+    "d": (left, right) => roll_dice(left, right)
 };
 
 /** This is a part of the interpreter's bytecode handler table which holds all unary operators */
 const un_ops = {
     "~": (value) => -value,
-    "ud": (value) => roll_dice(1, value)
 };
 
 /**
@@ -263,7 +264,7 @@ function evaluate(insts) {
         }
     }
     // And here is our result
-    return stack.pop();
+    return Math.round(stack.pop());
 }
 
 module.exports = {
