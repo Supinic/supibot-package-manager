@@ -105,7 +105,7 @@ class Parser {
         return insts;
     }
 
-    /** binary operators with precedence 0: "+", "-" */
+    /** binary operators with precedence 0: "X+Y", "X-Y" */
     #parse_binary0() {
         // this is what "operator precedence is built into the function" means
         // the first step in any of these parsing functions is to try and parse
@@ -125,7 +125,7 @@ class Parser {
         return left;
     }
 
-    /** binary operators with precedence 1: "*", "/" */
+    /** binary operators with precedence 1: "X*Y", "X/Y" */
     #parse_binary1() {
         // doing the same thing as above
         let left = this.#parse_unary();
@@ -137,7 +137,7 @@ class Parser {
         return left;
     }
 
-    /** unary operators: "+", "-" */
+    /** unary operators: "+X", "-X" */
     #parse_unary() {
         // we only have to do something if the unary operator is "-"
         if (this.#current === "-") {
@@ -145,25 +145,34 @@ class Parser {
             // in which case we output a special negation operator, "~"
             // this is a solution to the ambiguity between 
             // binary operator "-" and unary operator "-"
-            return [...this.#parse_dice(), "~"];
+            return [...this.#parse_binary_dice(), "~"];
         }
-        return this.#parse_dice();
+        return this.#parse_binary_dice();
     }
 
-    /** dice operator: "d" */
-    #parse_dice() {
+    /** dice operator: "AdX" */
+    #parse_binary_dice() {
         // the dice operator is in the form "AdX",
         // which will cause an X-sided dice to be rolled A times
         // it's a binary operator, so it's parsed the same way as binary1 and binary0
         // because it's the highest precedence operator, the only higher precedence
         // thing we can do is parse a terminal value
-        let left = this.#parse_terminal();
+        let left = this.#parse_unary_dice();
         if (this.#current === "d") {
             this.#advance();
-            const right = this.#parse_terminal();
-            left = [...left, ...right, "d"];
+            const right = this.#parse_unary_dice();
+            left = [...left, ...right, "bd"];
         }
         return left;
+    }
+
+    /** unary dice operator: "dX" */
+    #parse_unary_dice() {
+        if (this.#current === "d") {
+            this.#advance();
+            return [...this.#parse_terminal(), "ud"];
+        }
+        return this.#parse_terminal();
     }
 
     /** terminal value: an expression in parentheses, or a number */
@@ -213,13 +222,14 @@ const bin_ops = {
     "-": (left, right) => left - right,
     "*": (left, right) => left * right,
     "/": (left, right) => left / right,
-    "d": (left, right) => roll_dice(left, right)
-}
+    "bd": (left, right) => roll_dice(left, right)
+};
 
 /** This is a part of the interpreter's bytecode handler table which holds all unary operators */
 const un_ops = {
     "~": (value) => -value,
-}
+    "ud": (value) => roll_dice(1, value)
+};
 
 /**
  * This is a stack-based interpreter, which interprets reverse polish notation (https://en.wikipedia.org/wiki/Reverse_Polish_notation)
