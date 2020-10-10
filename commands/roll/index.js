@@ -162,10 +162,8 @@ class Parser {
     /** dice operator: "AdX" */
     #parse_binary_dice() {
         // the binary dice operator is in the form "AdX",
-        // which will cause an X-sided dice to be rolled A times
+        // which will cause an X-sided die to be rolled A times
         // it's a binary operator, so it's parsed the same way as binary1 and binary0
-        // because it's the highest precedence operator, the only higher precedence
-        // thing we can do is parse a terminal value
         let left = this.#parse_unary_dice();
         if (this.#current === "d") {
             this.#advance();
@@ -177,8 +175,11 @@ class Parser {
 
     /** unary dice operator: "dX" */
     #parse_unary_dice() {
-        // unary dice operator is in the form "dX", and it's
-        // treated the same as the binary operator, except it
+        // unary dice operator is in the form "dX",
+        // but it works the same way as "AdX", except that
+        // A is implicitly 1
+        // because it's the highest precedence operator, 
+        // the only higher precedence thing we can do is parse a terminal value
         if (this.#current === "d") {
             this.#advance();
             return [1, ...this.#parse_terminal(), "d"];
