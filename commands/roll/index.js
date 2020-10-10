@@ -13,6 +13,8 @@
         -> Unexpected token + after undefined
     "3d10)"
         -> Could not parse entire token list.
+    "5dd6"
+        -> Unexpected token d after d
 
     and here are some valid expressions:
 
@@ -154,7 +156,19 @@ class Parser {
             // in which case we output a special negation operator, "~"
             // this is a solution to the ambiguity between 
             // binary operator "-" and unary operator "-"
-            return [...this.#parse_binary_dice(), "~"];
+            return [...this.#parse_unary_dice(), "~"];
+        }
+        return this.#parse_unary_dice();
+    }
+
+    /** unary dice operator: "dX" */
+    #parse_unary_dice() {
+        // unary dice operator is in the form "dX",
+        // but it works the same way as "AdX", except that
+        // A is implicitly 1
+        if (this.#current === "d") {
+            this.#advance();
+            return [1, ...this.#parse_terminal(), "d"];
         }
         return this.#parse_binary_dice();
     }
@@ -164,27 +178,15 @@ class Parser {
         // the binary dice operator is in the form "AdX",
         // which will cause an X-sided die to be rolled A times
         // it's a binary operator, so it's parsed the same way as binary1 and binary0
-        let left = this.#parse_unary_dice();
+        // because it's the highest precedence operator, 
+        // the only higher precedence thing we can do is parse a terminal value
+        let left = this.#parse_terminal();
         if (this.#current === "d") {
             this.#advance();
-            const right = this.#parse_unary_dice();
+            const right = this.#parse_terminal();
             left = [...left, ...right, "d"];
         }
         return left;
-    }
-
-    /** unary dice operator: "dX" */
-    #parse_unary_dice() {
-        // unary dice operator is in the form "dX",
-        // but it works the same way as "AdX", except that
-        // A is implicitly 1
-        // because it's the highest precedence operator, 
-        // the only higher precedence thing we can do is parse a terminal value
-        if (this.#current === "d") {
-            this.#advance();
-            return [1, ...this.#parse_terminal(), "d"];
-        }
-        return this.#parse_terminal();
     }
 
     /** terminal value: an expression in parentheses, or a number */
@@ -215,9 +217,6 @@ class Parser {
     }
 }
 
-//Temporary random function used during testing so this whole chunk of code can be dumped into a devtools console
-// window.sb = { Utils: { random: (min, max) => Math.random() * (max - min) + min } };
-
 function roll_dice(times, sides) {
     let sum = 0;
     while (times --> 0) {
@@ -227,7 +226,7 @@ function roll_dice(times, sides) {
 }
 
 /**
- * This is a part of the interpreter's bytecode handler table which holds all binary operators
+ * Bytecode handler table which holds all binary operators
  */
 const bin_ops = {
     "+": (left, right) => left + right,
@@ -237,7 +236,9 @@ const bin_ops = {
     "d": (left, right) => roll_dice(left, right)
 };
 
-/** This is a part of the interpreter's bytecode handler table which holds all unary operators */
+/** 
+ * Bytecode handler table which holds all unary operators 
+ */
 const un_ops = {
     "~": (value) => -value,
 };
