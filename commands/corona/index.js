@@ -264,16 +264,20 @@ module.exports = {
 			word: (allRecoveries === 1) ? "recovery" : "recoveries"
 		};
 	
+		const active = group(allCases - (allDeaths ?? 0) - (allRecoveries ?? 0));		
+
 		const ratios = {};
 		if (population !== null) {
 			ratios.cpm = sb.Utils.round((allCases / population) * 1e6, 2);
 			ratios.dpm = sb.Utils.round((allDeaths / population) * 1e6, 2);
+			if(active !== null){
+				ratios.apm = sb.Utils.rount((active / population) * 1e6, 2);
+			}
 			if (tests !== null) {
 				ratios.tpm = sb.Utils.round((tests / population) * 1e6, 2);
 			}
 		}
 	
-		const active = group(allCases - (allDeaths ?? 0) - (allRecoveries ?? 0));		
 		return {
 			reply: sb.Utils.tag.trim `
 				${intro}
@@ -295,11 +299,16 @@ module.exports = {
 					? `${group(tests)} tests have been performed so far.`
 					: ""
 				}
-	
+				
+				${(ratios.apm)
+					? `This is ${group(ratios.apm)} active cases, `
+					: `This is `
+				}
+
 				${(ratios.cpm)
 				? (ratios.tpm)
-					? `This is ${group(ratios.cpm)} cases, ${group(ratios.dpm)} deaths, and ${group(ratios.tpm)} tests per million.`
-					: `This is ${group(ratios.cpm)} cases, and ${group(ratios.dpm)} deaths per million.`
+					? ` ${group(ratios.cpm)} cases, ${group(ratios.dpm)} deaths, and ${group(ratios.tpm)} tests per million.`
+					: ` ${group(ratios.cpm)} cases, and ${group(ratios.dpm)} deaths per million.`
 				: ""
 			}`
 		};
