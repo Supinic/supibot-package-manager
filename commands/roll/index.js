@@ -25,10 +25,11 @@ here are some possible test values:
 */
 
 /**
- * Turns a string into a list of Tokens, or an Error if something went wrong
+ * Turns a string into a list of Tokens
  *
  * @param {string} str Input string
- * @returns {(string[] | Error)} List of tokens or Error
+ * @returns {string[]} List of tokens
+ * @throws {Error} In case of unrecognized token
  */
 function tokenize(str) {
     if (!str || str.length === 0) return [];
