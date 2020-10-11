@@ -264,14 +264,14 @@ module.exports = {
 			word: (allRecoveries === 1) ? "recovery" : "recoveries"
 		};
 	
-		const active = group(allCases - (allDeaths ?? 0) - (allRecoveries ?? 0));		
+		const active = (allCases - (allDeaths ?? 0) - (allRecoveries ?? 0));		
 
 		const ratios = {};
 		if (population !== null) {
 			ratios.cpm = sb.Utils.round((allCases / population) * 1e6, 2);
 			ratios.dpm = sb.Utils.round((allDeaths / population) * 1e6, 2);
-			if(active !== null){
-				ratios.apm = sb.Utils.rount((active / population) * 1e6, 2);
+			if (active !== null){
+				ratios.apm = sb.Utils.round((active / population) * 1e6, 2);
 			}
 			if (tests !== null) {
 				ratios.tpm = sb.Utils.round((tests / population) * 1e6, 2);
