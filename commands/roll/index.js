@@ -49,9 +49,9 @@ module.exports = {
 			else {
 				return { reply: `Your roll is ${result}` };
 			}
-		} catch(error) {
+		} catch (error) {
 			if (context.append.pipe) {
-				return { reply: String(error.message) };
+				return { reply: String(error.message), success: false };
 			} 
 			else {
 				return { reply: `WAYTOODANK ${error.message}` };
