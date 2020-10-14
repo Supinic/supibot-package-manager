@@ -282,7 +282,7 @@ module.exports = {
 			reply: sb.Utils.tag.trim `
 				${intro}
 				has 
-				${active} active cases,
+				${group(active)} active cases,
 				${cases.amount} total ${cases.word}${(cases.plusAmount === null)
 					? ""
 					: ` (${cases.plusPrefix}${cases.plusAmount})`
