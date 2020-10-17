@@ -20,6 +20,14 @@ describe("global module suite", function ()  {
 			fileList: fs.readdirSync("./chat-modules"),
 			validProperties: require("./properties-validation/chat-modules.js"),
 			definitions: []
+		},
+		{
+			name: "crons",
+			singular: "cron",
+			directory: "crons",
+			fileList: fs.readdirSync("./crons"),
+			validProperties: require("./properties-validation/crons.js"),
+			definitions: []
 		}
 	];
 
