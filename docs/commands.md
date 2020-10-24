@@ -5,7 +5,7 @@ They create an interface for the chat user to interact with.
 Any communication with the bot, external APIs or other bots is done via commands.
 
 ## List
-The active command list can be found in the [commands](commands) directory.
+The active command list can be found in the [commands](../commands) directory.
 Each directory consists of the command's definition in `index.js` files.
 The directory can contain more files such as tests, but that's currently unsupported and not suggested.
 This means all flags, cooldowns, static data, aliases and dynamic descriptions are all available along with its JavaScript code.
