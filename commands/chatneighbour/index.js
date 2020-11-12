@@ -41,16 +41,13 @@ module.exports = {
 	
 		const index = list.indexOf(userData.Name);
 		if (index === -1) {
-			return {
-				success: false,
-				reply: "That user is not currently present in chat!"
-			};
+			list.push(userData.Name);
 		}
 	
 		const neighbours = [list[index - 1], list[index], list[index + 1]]
 			.filter(Boolean)
 			.map(i => i[0] + "\u{E0000}" + i.slice(1));
-	
+		
 		if (neighbours.length < 2) {
 			return {
 				reply: `No chat neighbours have been detected... This shouldn't happen?`
