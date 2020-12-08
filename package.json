@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "mocha ./tests/command-syntax.test.js"
+    "test": "mocha tests"
   },
   "devDependencies": {
     "acorn-node": "^2.0.1",
