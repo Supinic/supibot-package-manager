@@ -156,7 +156,7 @@ module.exports = {
 			: `$${price.regular} per ${price.unit}`;
 
 		const revenueString = (revenue !== null && revenue > 0)
-			? `Total revenue: $${revenue}`
+			? `Total revenue: $${revenue}.`
 			: "";
 
 		const languageString = (languages.length > 0)
