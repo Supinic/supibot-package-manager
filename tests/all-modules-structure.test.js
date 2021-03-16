@@ -46,7 +46,8 @@ describe("global module suite", function ()  {
 						let model = null;
 						try {
 							model = acorn.parse(content, {
-								ecmaVersion: 2020, sourceType: "module"
+								ecmaVersion: 2020,
+								sourceType: "module"
 							});
 						}
 						catch (e) {
