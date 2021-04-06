@@ -22,10 +22,14 @@ module.exports = [
 	},
 	{
 		name: "Defer",
-		failMessage: "Object of string Literal keys and number Literal values, or null Literal",
+		failMessage: "null literal, non-generator FunctionExpression or ArrowFunctionExpression",
 		checkCallback: (v) => (
-			(v.type === "ObjectExpression" && v.properties.every(i => i.key.type === "Literal" && typeof i.key.value === "string" && i.value.type === "Literal" && typeof i.value.value === "number"))
-			|| (v.type === "Literal" && v.value === null)
+			(v.type === "Literal" && v.value === null)
+			|| (
+				(v.type === "FunctionExpression" || v.type === "ArrowFunctionExpression")
+				&& v.generator === false
+				&& (typeof v.method !== "boolean" || v.method === false)
+			)
 		)
 	},
 	{
