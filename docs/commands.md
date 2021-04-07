@@ -37,7 +37,6 @@ As such, version control is non-existent with the database alone, but thanks to 
         - `archived` The command has been archived and is no longer in use.
         - `block` It is possible to use the [`block`](commands/block/index.js) command to block specific users from this command's execution on them.
         - `developer` Is not shown on the website command list, unless the logged in user is flagged as a developer.
-        - `link-only` Automatically parses the `linkOnly:true` parameter, and returns links  without any text around, if passed.
         - `mention` Will mention users upon successful invocation.
         - `opt-out` It is possible to use the [`optout`](commands/optout/index.js)` command to stop all users from executing this command on them.
         - `owner-override` If the command is used by the channel owner, then the cooldown will be reduced to 500ms.
