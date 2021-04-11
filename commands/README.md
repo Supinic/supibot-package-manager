@@ -1,14 +1,34 @@
 # Commands
+### Nav
+- [SPM](../README.md)
+    - [Chat modules](../chat-modules/README.md)
+    - **Commands**
+    - [Crons](../crons/README.md)
+
+***Any documentation can be expanded upon request.***
+
+## Overview
 
 Commands are the essential part of Supibot.
 They create an interface for the chat user to interact with.
 Any communication with the bot, external APIs or other bots is done via commands.
 
 ## List
-The active command list can be found in the [commands](../commands) directory.
-Each directory consists of the command's definition in `index.js` files.
-The directory can contain more files such as tests, but that's currently unsupported and not suggested.
-This means all flags, cooldowns, static data, aliases and dynamic descriptions are all available along with its JavaScript code.
+The active command list can be found in this directory.
+Each sub-directory consists of the command's definition in an `index.js` file.
+The directory can contain more files such as `README.md` files, SQL table definitions, and tests, however tests are currently unsupported and not suggested.
+This means all flags, cooldowns, static data, aliases, dynamic descriptions, and JavaScript code are all available in the index.js file.
+
+###### Example
+```diff
+📁commands
+├📁suggest
+│├index.js
+│├README.md
+│└suggestion.sql
+...
+└README.md
+```
 
 ## Definition
 
@@ -21,7 +41,7 @@ As such, version control is non-existent with the database alone, but thanks to 
 - Name
     - This is the main name of the command. It will be used in any external reference to it.
 - Aliases
-    - If `null`, then no aliases are used.    
+    - If `null`, then no aliases are used.
     - Otherwise, it is an array of strings, with alternative names. This means the same command can be executed with multiple so-called *invocations*.
 - Description
     - Short text description of what the command does.
