@@ -11,3 +11,5 @@ This command SETS but doesnt use the following config variables:
 - `TTS_MULTIPLE_ENABLED` - **NOT** setup by the setup script.
 - `PLAYSOUNDS_ENABLED` - **NOT** setup by the setup script.
 - `SONG_REQUESTS_STATE` - **NOT** setup by the setup script.
+
+This command documentation can be expanded upon request.

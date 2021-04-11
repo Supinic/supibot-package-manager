@@ -8,4 +8,4 @@ This command uses the following config variables:
 - `YOUTUBEDL_PATH` - **NOT** setup by the setup script.
 - `SONG_REQUESTS_VLC_PAUSED` - **NOT** setup by the setup script.
 
-This command is very complicated, and if you want to set it up you can ask supi for help.
+This command is not simple, and will be documented upon request.
