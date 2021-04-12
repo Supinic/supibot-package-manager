@@ -30,7 +30,7 @@ module.exports = {
 		let historyText = "";
 		const currentSize = sb.Utils.round(data.Bytes / (10 ** 9), 3);
 		
-		if(history) {
+		if (history) {
 			const days = (sb.Date.now() - history.Executed) / 864.0e5;
 			const originalSize = Number(history.Result.match(/([\d.]+) GB of space/)[1]);
 			const rate = sb.Utils.round((currentSize - originalSize) / days, 3);
@@ -56,14 +56,13 @@ module.exports = {
 			cooldown.channel - null;
 			cooldown.length = this.Cooldown * 2;
 		}
-	
-		
 
 		return {
 			cooldown,
 			reply: sb.Utils.tag.trim `
 				Currently logging ${sb.Utils.groupDigits(data.Chat_Lines)} lines in total across all channels,
-				taking up ~${currentSize} GB of space. ${historyText}
+				taking up ~${currentSize} GB of space.
+				${historyText}
 			`
 		};
 	}),
