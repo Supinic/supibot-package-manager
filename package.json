@@ -4,6 +4,7 @@
   },
   "devDependencies": {
     "acorn-node": "^2.0.1",
-    "mocha": "latest"
+    "mocha": "latest",
+    "supi-core": "github:Supinic/supi-core"
   }
 }
