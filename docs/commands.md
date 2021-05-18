@@ -188,7 +188,7 @@ Since all command code functions are `await`ed, it doesn't really make a differe
     for (let i = args.length - 1; i >= 0; i--) {
         const token = args[i];
         if (/lang:\w+/.test(token)) {
-            language = sb.Utils.languageISO.getCode(token.split(":")[1]);
+            language = sb.Utils.modules.languageISO.getCode(token.split(":")[1]);
             if (language === null) {
                 return {
                     reply: "Invalid language provided!",
