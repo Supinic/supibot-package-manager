@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "mocha tests",
+    "test": "mocha ./tests --recursive --exit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
