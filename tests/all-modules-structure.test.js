@@ -5,7 +5,7 @@ const acorn = require("acorn-node");
 const { strictEqual: equal } = require("assert");
 const getType = (value) => (value === null) ? "null" : typeof value;
 
-describe("global module suite", function ()  {
+describe("global module suite", () => {
 	const modules = [
 		{
 			name: "commands",
@@ -40,11 +40,11 @@ describe("global module suite", function ()  {
 		}));
 	}
 
-	describe("total modules structure", function () {
+	describe("total modules structure", () => {
 		for (const module of modules) {
-			describe(`${module.name} - structure`, function () {
+			describe(`${module.name} - structure`, () => {
 				for (const { content, name } of module.definitions) {
-					it(`${name}`, function () {
+					it(`${name}`, () => {
 						let model = null;
 						try {
 							model = acorn.parse(content, {
@@ -53,7 +53,7 @@ describe("global module suite", function ()  {
 							});
 						}
 						catch (e) {
-							throw new Error("Parsing of command failed\n\n" + content + "\n\n" + e.toString());
+							throw new Error(`Parsing of command failed\n\n${content}\n\n${e.toString()}`);
 						}
 
 						equal(model.type, "Program", "Module must be a program");
@@ -81,27 +81,27 @@ describe("global module suite", function ()  {
 								throw new Error(`computed expressions are not allowed`);
 							}
 							else if (item.shorthand === true) {
-								throw new Error(`shorthand expressions are not allowed`)
+								throw new Error(`shorthand expressions are not allowed`);
 							}
 							else if (item.kind === "set" || item.kind === "get") {
-								throw new Error(`${item.kind}ter methods are not allowed`)
+								throw new Error(`${item.kind}ter methods are not allowed`);
 							}
 							else if (item.value && item.value.generator === true) {
-								throw new Error("generator methods are not allowed")
+								throw new Error("generator methods are not allowed");
 							}
 
 							const found = module.validProperties.find(i => i.name === item.key.name);
 							if (!found) {
-								throw new Error(`property ${item.key.name} is not allowed`)
+								throw new Error(`property ${item.key.name} is not allowed`);
 							}
 							else if (found.valueKind && item.value.type !== found.valueKind) {
-								throw new Error(`property ${item.key.name} has invalid value-kind ${item.value.type} - expected ${found.valueKind}`)
+								throw new Error(`property ${item.key.name} has invalid value-kind ${item.value.type} - expected ${found.valueKind}`);
 							}
 							else if (found.valueTypes && !found.valueTypes.includes(getType(item.value.value))) {
-								throw new Error(`property ${item.key.name} has invalid value-type ${typeof item.value.value} - expected ${found.valueTypes.join("|")}`)
+								throw new Error(`property ${item.key.name} has invalid value-type ${typeof item.value.value} - expected ${found.valueTypes.join("|")}`);
 							}
 							else if (typeof found.checkCallback === "function" && !found.checkCallback(item.value)) {
-								throw new Error(`property ${item.key.name} must be ${found.failMessage}`)
+								throw new Error(`property ${item.key.name} must be ${found.failMessage}`);
 							}
 
 							if (foundProperties.has(found.name)) {
