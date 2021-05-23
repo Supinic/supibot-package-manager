@@ -147,7 +147,7 @@
     "template-tag-spacing": ["warn", "always"],
     "unicorn/no-lonely-if": "warn",
     "unicorn/no-nested-ternary": "warn",
-    "unicorn/no-unsafe-regex": "warn",
+    "unicorn/no-unsafe-regex": "off",
     "unicorn/empty-brace-spaces": "warn",
     "wrap-iife": ["warn", "inside"],
     "yoda": "error"
