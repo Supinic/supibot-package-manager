@@ -375,8 +375,10 @@ module.exports = {
 				});
 
 				await row.save({ skipLoad: true });
+
+				const verb = (type === "copyplace") ? "copied and replaced" : "copied";
 				return {
-					reply: `Alias "${targetAliasName}" copied successfully.`
+					reply: `Alias "${targetAliasName}" ${verb} successfully.`
 				};
 			}
 
