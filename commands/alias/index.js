@@ -343,7 +343,7 @@ module.exports = {
 					.select("ID", "Command", "Invocation", "Arguments")
 					.from("data", "Custom_Command_Alias")
 					.where("Channel IS NULL")
-					.where("User_Alias = %n", targetUser.ID)
+					.where("User_Alias = %n", context.user.ID)
 					.limit(1)
 					.single()
 				);
@@ -351,7 +351,7 @@ module.exports = {
 				if (currentAlias && type !== "copyplace") {
 					return {
 						success: false,
-						reply: `Cannot copy alias "${targetAlias} - you already have it! If you want to copy + replace, use "alias copyplace".`
+						reply: `Cannot copy alias "${targetAliasName} - you already have it! If you want to copy + replace, use "alias copyplace".`
 					};
 				}
 
