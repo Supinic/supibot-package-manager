@@ -698,7 +698,7 @@ module.exports = {
 				}
 
 				const invocation = alias.Invocation;
-				const aliasArguments = alias.Arguments ?? [];
+				const aliasArguments = (alias.Arguments) ? JSON.parse(alias.Arguments) : [];
 
 				const { success, reply, resultArguments } = this.staticData.applyParameters(context, aliasArguments, args.slice(1));
 				if (!success) {
