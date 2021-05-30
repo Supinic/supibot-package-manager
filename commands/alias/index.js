@@ -266,12 +266,12 @@ module.exports = {
 				}
 
 				let message;
+				const aliasArgs = (alias.Arguments) ? JSON.parse(alias.Arguments) : [];
 				if (type === "code") {
-					const aliasArgs = (alias.Arguments) ? JSON.parse(alias.Arguments) : [];
 					message = `${alias.Invocation} ${aliasArgs.join(" ")}`;
 				}
 				else {
-					message = `${prefix} alias "${aliasName}" has this definition: ${alias.Invocation} ${(alias.Arguments ?? []).join(" ")}`;
+					message = `${prefix} alias "${aliasName}" has this definition: ${alias.Invocation} ${aliasArgs.join(" ")}`;
 				}
 
 				const limit = context.channel?.Message_Limit ?? context.platform.Message_Limit;
