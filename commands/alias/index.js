@@ -153,7 +153,7 @@ module.exports = {
 					Name: name,
 					Command: commandCheck.Name,
 					Invocation: command,
-					Arguments: (rest.length > 0) ? JSON.stringify(args) : null,
+					Arguments: (rest.length > 0) ? JSON.stringify(rest) : null,
 					Created: new sb.Date(),
 					Edited: null
 				});
@@ -267,7 +267,8 @@ module.exports = {
 
 				let message;
 				if (type === "code") {
-					message = `${alias.Invocation} ${(alias.Arguments ?? []).join(" ")}`;
+					const aliasArgs = (alias.Arguments) ? JSON.parse(alias.Arguments) : [];
+					message = `${alias.Invocation} ${aliasArgs.join(" ")}`;
 				}
 				else {
 					message = `${prefix} alias "${aliasName}" has this definition: ${alias.Invocation} ${(alias.Arguments ?? []).join(" ")}`;
@@ -299,8 +300,8 @@ module.exports = {
 
 			case "copy":
 			case "copyplace": {
-				const [targetUser, targetAliasName] = args;
-				if (!targetUser) {
+				const [targetUserName, targetAliasName] = args;
+				if (!targetUserName) {
 					return {
 						success: false,
 						reply: "No target username provided!"
@@ -313,8 +314,8 @@ module.exports = {
 					};
 				}
 
-				const target = await sb.User.get(targetUser);
-				if (!target) {
+				const targetUser = await sb.User.get(targetUserName);
+				if (!targetUser) {
 					return {
 						success: false,
 						reply: "Invalid user provided!"
@@ -324,7 +325,7 @@ module.exports = {
 				const targetAlias = await sb.Query.getRecordset(rs => rs
 					.select("ID", "Command", "Invocation", "Arguments")
 					.from("data", "Custom_Command_Alias")
-					.where("Channel IS NULL", targetUser.ID)
+					.where("Channel IS NULL")
 					.where("User_Alias = %n", targetUser.ID)
 					.where("Name = %s", targetAliasName)
 					.limit(1)
@@ -341,7 +342,7 @@ module.exports = {
 				const currentAlias = await sb.Query.getRecordset(rs => rs
 					.select("ID", "Command", "Invocation", "Arguments")
 					.from("data", "Custom_Command_Alias")
-					.where("Channel IS NULL", targetUser.ID)
+					.where("Channel IS NULL")
 					.where("User_Alias = %n", targetUser.ID)
 					.limit(1)
 					.single()
@@ -432,7 +433,7 @@ module.exports = {
 				}
 
 				const oldAlias = await sb.Query.getRecordset(rs => rs
-					.select("Command", "Invocation", "Arguments", "Description")
+					.select("ID", "Command", "Invocation", "Arguments", "Description")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
 					.where("Name = %s", oldAliasName)
@@ -650,7 +651,7 @@ module.exports = {
 					.select("ID")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", oldAliasName)
+					.where("Name = %s", newAliasName)
 					.limit(1)
 					.single()
 				);
