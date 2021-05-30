@@ -344,6 +344,7 @@ module.exports = {
 					.from("data", "Custom_Command_Alias")
 					.where("Channel IS NULL")
 					.where("User_Alias = %n", context.user.ID)
+					.where("Name = %s", targetAliasName)
 					.limit(1)
 					.single()
 				);
