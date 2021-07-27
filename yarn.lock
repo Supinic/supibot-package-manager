@@ -291,14 +291,14 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "16.3.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.3.1.tgz#24691fa2b0c3ec8c0d34bfcfd495edac5593ebb4"
-  integrity sha512-N87VuQi7HEeRJkhzovao/JviiqKjDKMVKxKMfUvSKw+MbkbW8R0nA3fi/MQhhlxV2fQ+2ReM+/Nt4efdrJx3zA==
+  version "16.4.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.4.3.tgz#c01c1a215721f6dec71b47d88b4687463601ba48"
+  integrity sha512-GKM4FLMkWDc0sfx7tXqPWkM6NBow1kge0fgQh0bOnlqo4iT1kvTvMEKE0c1RtUGnbLlGRXiAA8SumE//90uKAg==
 
 "@types/node@^14.14.28":
-  version "14.17.5"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.5.tgz#b59daf6a7ffa461b5648456ca59050ba8e40ed54"
-  integrity sha512-bjqH2cX/O33jXT/UmReo2pM7DIJREPMnarixbQ57DOOzzFaI6D2+IcwaJQaJpv0M1E9TIhPCYVxrkcityLjlqA==
+  version "14.17.6"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.17.6.tgz#cc61c8361c89e70c468cda464d1fa3dd7e5ebd62"
+  integrity sha512-iBxsxU7eswQDGhlr3AiamBxOssaYxbM+NKXVil8jg9yFXvrfEFbDumLD/2dMTB+zYyg7w+Xjt8yuxfdbUHAtcQ==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -615,9 +615,9 @@ chokidar@3.5.1:
     fsevents "~2.3.1"
 
 chrono-node@^2.2.4:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/chrono-node/-/chrono-node-2.3.0.tgz#bf21f5bf27abb94b98c68042463dea7341231093"
-  integrity sha512-70DhMEY3RiwB/9+Fstpu9cbI+ycO/WNHxCOI1Lvo+LLiVdhMVOJ8B3jzXgZHCiGbZc7SKHFsP7apeeuP/EAw+Q==
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/chrono-node/-/chrono-node-2.3.1.tgz#b47f1f6496ee8de676a2153e693856a5c53fe5ea"
+  integrity sha512-zx/o58qoIKNhZT3eFZyi7wAK4Yn+y7EVrWnYiPXbYWXnZdX1HzoU1u9pTfhHymNV1Rdk/IGjOVgQul54dR8Z0Q==
   dependencies:
     dayjs "^1.10.0"
 
@@ -702,7 +702,7 @@ convert-source-map@^1.7.0:
   dependencies:
     safe-buffer "~5.1.1"
 
-cron@latest:
+cron@^1.8.2:
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/cron/-/cron-1.8.2.tgz#4ac5e3c55ba8c163d84f3407bde94632da8370ce"
   integrity sha512-Gk2c4y6xKEO8FSAUTklqtfSr7oTq0CiPQeLBG5Fl0qoXpZyMcj1SG59YL+hqq04bu6/IuEA7lMkYDAplQNKkyg==
@@ -1064,7 +1064,7 @@ fast-levenshtein@^2.0.6:
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
 
-fast-xml-parser@latest:
+fast-xml-parser@^3.19.0:
   version "3.19.0"
   resolved "https://registry.yarnpkg.com/fast-xml-parser/-/fast-xml-parser-3.19.0.tgz#cb637ec3f3999f51406dd8ff0e6fc4d83e520d01"
   integrity sha512-4pXwmBplsCPv8FOY1WRakF970TjNGnGnfbOnLqjlYvMiF1SR3yOHyxMR/YCXpPTOspNF5gwudqktIP4VsWkvBg==
@@ -1236,7 +1236,7 @@ got@^10.7.0:
     to-readable-stream "^2.0.0"
     type-fest "^0.10.0"
 
-got@latest:
+got@^11.8.0:
   version "11.8.2"
   resolved "https://registry.yarnpkg.com/got/-/got-11.8.2.tgz#7abb3959ea28c31f3576f1576c1effce23f33599"
   integrity sha512-D0QywKgIe30ODs+fm8wMZiAcZjypcCodPNuMz5H9Mny7RJ+IjJ10BdmGW7OM7fHXP+O7r6ZwapQ/YQmMSvB0UQ==
@@ -1931,7 +1931,7 @@ quick-lru@^5.1.1:
   resolved "https://registry.yarnpkg.com/quick-lru/-/quick-lru-5.1.1.tgz#366493e6b3e42a3a6885e2e99d18f80fb7a8c932"
   integrity sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==
 
-random-js@latest:
+random-js@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/random-js/-/random-js-2.1.0.tgz#0c03238b0a4f701f7a4c7303036ade3083d8ee14"
   integrity sha512-CRUyWmnzmZBA7RZSVGq0xMqmgCyPPxbiKNLFA5ud7KenojVX2s7Gv+V7eB52beKTPGxWRnVZ7D/tCIgYJJ8vNQ==
@@ -2021,9 +2021,9 @@ reserved-words@^0.1.2:
   integrity sha1-AKCUD5jNUBrqqsMWQR2a3FKzGrE=
 
 resolve-alpn@^1.0.0:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/resolve-alpn/-/resolve-alpn-1.1.2.tgz#30b60cfbb0c0b8dc897940fe13fe255afcdd4d28"
-  integrity sha512-8OyfzhAtA32LVUsJSke3auIyINcwdh5l3cvYKdKO0nvsYSKuiLfTM5i78PJswFPT8y6cPW+L1v6/hE95chcpDA==
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/resolve-alpn/-/resolve-alpn-1.2.0.tgz#058bb0888d1cd4d12474e9a4b6eb17bdd5addc44"
+  integrity sha512-e4FNQs+9cINYMO5NMFc6kOUCdohjqFPSgMuwuZAOUWqrfWsen+Yjy5qZFkV5K7VO7tFSLKcUL97olkED7sCBHA==
 
 resolve-from@^4.0.0:
   version "4.0.0"
@@ -2227,12 +2227,12 @@ strip-json-comments@3.1.1, strip-json-comments@^3.1.0, strip-json-comments@^3.1.
 
 "supi-core@github:Supinic/supi-core":
   version "2.2.0"
-  resolved "https://codeload.github.com/Supinic/supi-core/tar.gz/a9604258c926f8cd9ff85c46911c59c0c9ab0bf7"
+  resolved "https://codeload.github.com/Supinic/supi-core/tar.gz/2c0292999c1ad0d32da0364acd3f43f63270bf10"
   dependencies:
     async-markov "github:supinic/async-markov"
     cheerio "^1.0.0-rc.5"
     chrono-node "^2.2.4"
-    cron latest
+    cron "^1.8.2"
     dice-roll-eval "github:jprochazk/dice-roll-eval"
     duration-parser "github:supinic/duration-parser"
     ffprobe "^1.1.0"
@@ -2243,7 +2243,7 @@ strip-json-comments@3.1.1, strip-json-comments@^3.1.0, strip-json-comments@^3.1.
     long-timeout "github:supinic/long-timeout"
     mariadb "^2.5.2"
     node-vlc-http "github:supinic/node-vlc-http"
-    random-js latest
+    random-js "^2.1.0"
     rss-parser "^3.10.0"
     track-link-parser "github:supinic/track-link-parser"
     transliteration "^2.2.0"
@@ -2310,11 +2310,11 @@ to-regex-range@^5.0.1:
     is-number "^7.0.0"
 
 "track-link-parser@github:supinic/track-link-parser":
-  version "1.1.0"
-  resolved "https://codeload.github.com/supinic/track-link-parser/tar.gz/f19c944c203824032cf0609e0ed1c76be78dc4c0"
+  version "1.2.0"
+  resolved "https://codeload.github.com/supinic/track-link-parser/tar.gz/e2f2e65f21cbd5b32a02c288097dfcc769ad179e"
   dependencies:
-    fast-xml-parser latest
-    got latest
+    fast-xml-parser "^3.19.0"
+    got "^11.8.0"
 
 transliteration@^2.2.0:
   version "2.2.0"
