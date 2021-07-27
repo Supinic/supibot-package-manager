@@ -1,4 +1,3 @@
-/* global describe, it */
 /* eslint-disable max-nested-callbacks */
 const fs = require("fs");
 const acorn = require("acorn-node");
