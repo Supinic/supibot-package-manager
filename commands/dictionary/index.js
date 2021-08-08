@@ -80,7 +80,7 @@ module.exports = {
 		}
 		
 		const records = data.flatMap(i => Object.entries(i.meaning));
-		const items = records.flatMap(([type, value]) => value.map(item => ({ type, definition: item.definition })));
+		const items = records.flatMap(([type, value]) => value.definitions.map(item => ({ type, definition: item.definition })));
 		if (items.length === 0) {
 			return {
 				reply: `${data[0].word} (${data[0].phonetic ?? "N/A"}) - no word meaning has been found!`
