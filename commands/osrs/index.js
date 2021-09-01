@@ -6,6 +6,10 @@ module.exports = {
 	Description: "Aggregate command for whatever regarding Old School Runescape.",
 	Flags: ["mention","non-nullable","pipe","use-params"],
 	Params: [
+		{ name: "activity", type: "string" },
+		{ name: "boss", type: "string" },
+		{ name: "rude", type: "boolean" },
+		{ name: "seasonal", type: "boolean" },
 		{ name: "skill", type: "string" }
 	],
 	Whitelist_Response: null,
@@ -46,10 +50,10 @@ module.exports = {
 			return data;
 		},
 
-		getIronman: (data) => {
+		getIronman: (data, rude) => {
 			let ironman = "user";
 			if (data.ironman.deadHardcore) {
-				ironman = "ex-hardcore ironman";
+				ironman = (rude) ? "ex-hardcore ironman" : "ironman";
 			}
 			else if (data.ironman.regular) {
 				ironman = "ironman";
@@ -73,18 +77,28 @@ module.exports = {
 		/* eslint-disable array-element-newline */
 		activities: [
 			"abyssal sire", "alchemical hydra", "barrows chests", "bounty hunter - hunter", "bounty hunter - rogue",
-			"bryophyta", "callisto", "cerberus", "chambers of xeric", "chambers of xeric: challenge mode", "chaos elemental",
-			"chaos fanatic", "clue scrolls (all)", "clue scrolls (beginner)", "clue scrolls (easy)", "clue scrolls (elite)",
-			"clue scrolls (hard)", "clue scrolls (master)", "clue scrolls (medium)", "commander zilyana", "corporeal beast",
-			"crazy archaeologist", "dagannoth prime", "dagannoth rex", "dagannoth supreme", "deranged archaeologist",
-			"general graardor", "giant mole", "grotesque guardians", "hespori", "k'ril tsutsaroth", "kalphite queen",
-			"king black dragon", "kraken", "kree'arra", "league points", "lms - rank", "mimic", "nightmare", "obor", "sarachnis",
-			"scorpia", "skotizo", "tempoross", "the corrupted gauntlet", "the gauntlet", "theatre of blood", "thermonuclear smoke devil",
-			"tzkal-zuk", "tztok-jad", "venenatis", "vet'ion", "vorkath", "wintertodt", "zalcano", "zulrah"
+			"bryophyta", "callisto", "cerberus", "chambers of xeric", "chambers of xeric: challenge mode",
+			"chaos elemental", "chaos fanatic", "clue scrolls (all)", "clue scrolls (beginner)", "clue scrolls (easy)",
+			"clue scrolls (elite)", "clue scrolls (hard)", "clue scrolls (master)", "clue scrolls (medium)",
+			"commander zilyana", "corporeal beast", "crazy archaeologist", "dagannoth prime", "dagannoth rex",
+			"dagannoth supreme", "deranged archaeologist", "general graardor", "giant mole", "grotesque guardians",
+			"hespori", "k'ril tsutsaroth", "kalphite queen", "king black dragon", "kraken", "kree'arra",
+			"league points", "lms - rank", "mimic", "nightmare", "phosani's nightmare", "obor", "sarachnis", "scorpia",
+			"skotizo", "tempoross", "the corrupted gauntlet", "the gauntlet", "theatre of blood", "theatre of blood: hard mode",
+			"thermonuclear smoke devil", "tzkal-zuk", "tztok-jad", "venenatis", "vet'ion", "vorkath", "wintertodt",
+			"zalcano", "zulrah"
 		],
 		/* eslint-enable array-element-newline */
 
 		activityAliases: {
+			"all clues": "clue scrolls (all)",
+			"beginner clues": "clue scrolls (beginner)",
+			"easy clues": "clue scrolls (easy)",
+			"medium clues": "clue scrolls (medium)",
+			"hard clues": "clue scrolls (hard)",
+			"elite clues": "clue scrolls (elite)",
+			"master clues": "clue scrolls (master)",
+			cerb: "cerberus",
 			sire: "abyssal sire",
 			hydra: "alchemical hydra",
 			barrows: "barrows chests",
@@ -95,12 +109,17 @@ module.exports = {
 			bandos: "general graardor",
 			mole: "giant mole",
 			zammy: "k'ril tsutsaroth",
+			kril: "k'ril tsutsaroth",
+			"k'ril": "k'ril tsutsaroth",
 			kq: "kalphite queen",
 			kbd: "king black dragon",
 			armadyl: "kree'arra",
 			gauntlet: "the gauntlet",
+			phosani: "phosani's nightmare",
+			cg: "the corrupted gauntlet",
 			"corrupted gauntlet": "the corrupted gauntlet",
 			tob: "theatre of blood",
+			"tob hard": "theatre of blood: hard mode",
 			thermy: "thermonuclear smoke devil",
 			zuk: "tzkal-zuk",
 			inferno: "tzkal-zuk",
@@ -191,35 +210,43 @@ module.exports = {
 					};
 				}
 
-				const { statusCode, body: detail } = await sb.Got({
+				// followRedirect: false and omitting `responseType` is necessary for when the API is offline
+				// Apparently, Jagex's API will redirect to https://runescape.com/offline with an HTML response
+				// and a 302 code - this must be caught manually, as Got will attempt to parse it as JSON and fail.
+				const response = await sb.Got({
 					url: "https://secure.runescape.com/m=itemdb_oldschool/api/catalogue/detail.json",
 					throwHttpErrors: false,
-					responseType: "json",
+					followRedirect: false,
 					searchParams: new sb.URLParams()
 						.set("item", item.Game_ID)
 						.toString()
 				});
 
-				if (statusCode !== 200) {
+				if (response.statusCode === 302) {
+					return {
+						success: false,
+						reply: `Old School Runescape API is currently unreachable! Please try again later, or check Twitter: https://twitter.com/oldschoolrs/`
+					};
+				}
+				else if (response.statusCode !== 200) {
 					return {
 						success: false,
 						reply: `Item not found!`
 					};
 				}
 
-				const { current, today } = detail.item;
+				const { current, name, today } = JSON.parse(response.body).item;
 				const wiki = `https://osrs.wiki/${item.Name.replace(/\s+/g, "_")}`;
 				return {
 					reply: sb.Utils.tag.trim `
-						Current price of ${detail.item.name}: ${current.price},
+						Current price of ${name}: ${current.price},
 						current trend: ${today.trend} (${today.price})
 						${wiki}
 					`
 				};
 			}
 
-			case "stats":
-			case "seasonal-stats": {
+			case "stats": {
 				const user = args.join(" ");
 				if (!user) {
 					return {
@@ -228,17 +255,17 @@ module.exports = {
 					};
 				}
 
-				const data = (command.includes("seasonal"))
-					? await this.staticData.fetch(user, { seasonal: true })
-					: await this.staticData.fetch(user);
+				const data = await this.staticData.fetch(user, {
+					seasonal: Boolean(context.params.seasonal)
+				});
 
 				if (data.success === false) {
 					return data;
 				}
 
-				const accountType = (command.includes("seasonal"))
+				const accountType = (context.params.seasonal)
 					? "seasonal user"
-					: this.staticData.getIronman(data);
+					: this.staticData.getIronman(data, Boolean(context.params.rude));
 
 				if (context.params.skill) {
 					const skillName = context.params.skill.toLowerCase();
@@ -259,7 +286,11 @@ module.exports = {
 
 					const { emoji } = this.staticData.skills.find(i => i.name.toLowerCase() === skillName);
 					return {
-						reply: `${sb.Utils.capitalize(accountType)} ${user} ${emoji} ${skill.level} (XP: ${sb.Utils.groupDigits(skill.experience)})`
+						reply: sb.Utils.tag.trim `
+							${sb.Utils.capitalize(accountType)} ${user}
+							${emoji} ${skill.level} 
+							(XP: ${sb.Utils.groupDigits(skill.experience)})
+						`
 					};
 				}
 
@@ -292,61 +323,53 @@ module.exports = {
 				}
 			}
 
-			case "kc":
-			case "seasonal-kc": {
-				const input = { username: null, activity: null };
-				const [first, second] = args.join(" ").toLowerCase().split(",")
-					.map(i => i.trim());
-
-				if (this.staticData.activities.includes(first)) {
-					input.activity = first;
-					input.username = second;
-				}
-				else if (this.staticData.activityAliases[first]) {
-					input.activity = this.staticData.activityAliases[first];
-					input.username = second;
-				}
-				else if (this.staticData.activities.includes(second)) {
-					input.username = first;
-					input.activity = second;
-				}
-				else if (this.staticData.activityAliases[second]) {
-					input.username = first;
-					input.activity = this.staticData.activityAliases[second];
-				}
-				else {
+			case "kc": {
+				const user = args.join(" ");
+				if (!user) {
 					return {
 						success: false,
-						reply: `Could not match any activity! Check the list here: https://supinic.com/bot/command/${this.ID}`
+						reply: `No user provided!`
 					};
 				}
 
-				const data = (command.includes("seasonal"))
-					? await this.staticData.fetch(input.username, { seasonal: true })
-					: await this.staticData.fetch(input.username);
+				let activity = context.params.activity ?? context.params.boss;
+				if (!activity) {
+					return {
+						success: false,
+						reply: `No activity provided! Use activity:"boss name" - for a list, check here: https://supinic.com/bot/command/${this.ID}`
+					};
+				}
+
+				const data = await this.staticData.fetch(user, {
+					seasonal: Boolean(context.params.seasonal)
+				});
 
 				if (data.success === false) {
 					return data;
 				}
 
+				if (this.staticData.activityAliases[activity.toLowerCase()]) {
+					activity = this.staticData.activityAliases[activity.toLowerCase()];
+				}
+
 				const activities = data.activities.map(i => i.name.toLowerCase());
-				const bestMatch = sb.Utils.selectClosestString(input.activity, activities, { ignoreCase: true });
+				const bestMatch = sb.Utils.selectClosestString(activity.toLowerCase(), activities, { ignoreCase: true });
 				if (!bestMatch) {
 					return {
 						success: false,
-						reply: `Activity was not found! Check the list here: https://supinic.com/bot/command/${this.ID}`
+						reply: `Invalid activity was not found! Check the list here: https://supinic.com/bot/command/${this.ID}`
 					};
 				}
 
 				const { name, rank, value } = data.activities.find(i => i.name.toLowerCase() === bestMatch.toLowerCase());
 				const ironman = (command.includes("seasonal"))
 					? "Seasonal user"
-					: sb.Utils.capitalize(this.staticData.getIronman(data));
+					: sb.Utils.capitalize(this.staticData.getIronman(data, Boolean(context.params.rude)));
 
 				return {
 					reply: (rank === null)
-						? `${ironman} ${input.username} is not ranked for ${name}.`
-						: `${ironman} ${input.username}'s KC for ${name}: ${value} - rank #${rank}.`
+						? `${ironman} ${user} is not ranked for ${name}.`
+						: `${ironman} ${user}'s KC for ${name}: ${value} - rank #${rank}.`
 				};
 			}
 
@@ -377,9 +400,25 @@ module.exports = {
 	}),
 	Dynamic_Description: (async (prefix, values) => {
 		const { activities, activityAliases } = await values.getStaticData();
-		const list = [...activities, ...Object.keys(activityAliases)]
+		const aliases = [];
+		for (const [key, value] of Object.entries(activityAliases)) {
+			aliases.push({
+				activity: value,
+				alias: key
+			});
+		}
+
+		const list = [...activities]
 			.sort()
-			.map(i => `<li>${i}</li>`)
+			.map(activity => {
+				let alias = "";
+				const specific = aliases.filter(i => activity === i.activity).map(i => i.alias);
+				if (specific.length !== 0) {
+					alias = ` - aliases: ${specific.join(", ")}`;
+				}
+
+				return `<li>${activity}${alias}</li>`;
+			})
 			.join("");
 
 		return [
@@ -389,7 +428,6 @@ module.exports = {
 			"<u>Skill level overview</u>",
 			`<code>${prefix}osrs (username)</code>`,
 			`<code>${prefix}osrs stats (username)</code>`,
-			`<code>${prefix}osrs seasonal-stats (username)</code>`,
 			"Posts a full list of skill levels for provided user. Does not include experience or rankings.",
 			`If used with "seasonal-stats", the command will attempt to use that user's seasonal profile.`,
 			"",
@@ -397,19 +435,28 @@ module.exports = {
 			"<u>Skill level detail</u>",
 			`<code>${prefix}osrs (username) skill:(skill)</code>`,
 			`<code>${prefix}osrs stats (username) skill:(skill)</code>`,
-			`<code>${prefix}osrs seasonal-stats (username) skill:(skill)</code>`,
 			"For given user, posts the skill's level, experience, and ranking.",
 			`If used with "seasonal-stats", the command will attempt to use that user's seasonal profile.`,
 			"",
 
 			"<u>Kill-count</u>",
-			`<code>${prefix}osrs kc (activity), (username)</code>`,
-			`<code>${prefix}osrs kc (username), (activity)</code>`,
-			`<code>${prefix}osrs seasonal-kc (username), (activity)</code>`,
-			`<code>${prefix}osrs seasonal-kc (activity), (username)</code>`,
+			`<code>${prefix}osrs kc activity:"(activity name)" (username)</code>`,
+			`<code>${prefix}osrs kc boss:"(activity name)" (username)</code>`,
 			"For given user and activity, prints their kill-count and ranking.",
-			`If used with "seasonal-kc", the command will attempt to use that user's seasonal profile.`,
-			"<b>Important</b>: the name and activity (regardless of order) MUST be separated by a comma!",
+			"",
+
+			"<u>Seasonal stats</u>",
+			`<code>${prefix}osrs stats <u>seasonal:true</u> (username)</code>`,
+			`<code>${prefix}osrs kc <u>seasonal:true</u> activity:(activity) (username)</code>`,
+			`Works the same way as the respective commands, but uses the "seasonal" hiscores.`,
+			"This usually refers to Leagues, or the Deadman Mode.",
+			"",
+
+			`<u>"Rude mode"</u>`,
+			`<code>${prefix}osrs stats <u>rude:true</u> (username)</code>`,
+			`<code>${prefix}osrs kc <u>rude:true</u> activity:(activity) (username)</code>`,
+			`Works the same way as the respective command - but when used, the command will call out dead hardcore ironmen by calling them "ex-hardcore".`,
+			"If set to false, or not set at all, it will just refer to them as regular ironmen.",
 			"",
 
 			"<u>Item prices</u>",

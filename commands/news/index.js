@@ -316,6 +316,206 @@ module.exports = {
 						helpers: ["kalifail_disbang"]
 					}
 				]
+			},
+			{
+				code: "ua",
+				language: "ukrainian",
+				sources: [
+					{
+						name: "Radio Svoboda",
+						url: "https://www.radiosvoboda.org",
+						path: "api",
+						endpoints: ["zrqiteuuir", "zjmkrey$ko"],
+						helpers: ["boring_nick"]
+					},
+					{
+						name: "Obozrevatel",
+						url: "https://www.obozrevatel.com",
+						path: "ukr",
+						endpoints: ["rss.xml"],
+						helpers: ["boring_nick"]
+					},
+					{
+						name: "24TV",
+						url: "https://24tv.ua",
+						path: "rss",
+						endpoints: ["all.xml"],
+						helpers: ["boring_nick"]
+					}
+				]
+			},
+			{
+				code: "cz",
+				language: "czech",
+				sources: [
+					{
+						name: "Idnes",
+						url: "https://servis.idnes.cz",
+						path: null,
+						endpoints: ["rss.aspx?c=zpravodaj"],
+						helpers: ["supinic"]
+					},
+					{
+						name: "Aktualne.cz",
+						url: "https://zpravy.aktualne.cz/",
+						path: "rss",
+						endpoints: ["domaci"],
+						helpers: ["supinic"]
+					},
+					{
+						name: "iRozhlas",
+						url: "https://www.irozhlas.cz/",
+						path: "rss/irozhlas/section",
+						endpoints: ["zpravy-domov"],
+						helpers: ["supinic"]
+					}
+				]
+			},
+			{
+				code: "se",
+				language: "swedish",
+				sources: [
+					{
+						name: "SVT",
+						url: "https://www.svt.se/",
+						path: "nyheter",
+						endpoints: ["rss.xml"],
+						helpers: []
+					}
+				]
+			},
+			{
+				code: "de",
+				language: "german",
+				sources: [
+					{
+						name: "Tagesschau",
+						url: "https://www.tagesschau.de",
+						path: "xml",
+						endpoints: ["rss2"],
+						helpers: ["nerixyz"]
+					},
+					{
+						name: "Tagesspiegel",
+						url: "https://www.tagesspiegel.de/contentexport",
+						path: "feed",
+						endpoints: ["home"],
+						helpers: ["de_munkey"]
+					}
+				]
+			},
+			{
+				code: "be",
+				language: "(multiple)",
+				sources: [
+					{
+						name: "VRT",
+						url: "https://www.vrt.be",
+						path: "vrtnws",
+						endpoints: ["de.rss.articles.xml", "fr.rss.articles.xml", "nl.rss.articles.xml"],
+						helpers: ["supinic"]
+					},
+					{
+						name: "La Libre",
+						url: "https://www.lalibre.be/",
+						path: "rss/section",
+						endpoints: ["belgique.xml"],
+						helpers: ["unitedfingers"]
+					},
+					{
+						name: "Nieuwsblad",
+						url: "https://www.nieuwsblad.be",
+						path: "rss/section",
+						endpoints: ["55178e67-15a8-4ddd-a3d8-bfe5708f8932"],
+						helpers: ["unitedfingers"]
+					}
+				]
+			},
+			{
+				code: "ro",
+				language: "romanian",
+				sources: [
+					{
+						name: "G4Media",
+						url: "https://www.g4media.ro",
+						path: null,
+						endpoints: ["feed"],
+						helpers: ["agenttud"]
+					},
+					{
+						name: "HotNews",
+						url: "https://www.hotnews.ro",
+						path: null,
+						endpoints: ["rss"],
+						helpers: ["agenttud"]
+					},
+					{
+						name: "Mediafax",
+						url: "https://www.mediafax.ro/",
+						path: null,
+						endpoints: ["rss"],
+						helpers: ["agenttud"]
+					}
+				]
+			},
+			{
+				code: "ir",
+				language: "iranian",
+				sources: [
+					{
+						name: "رادیو فردا",
+						url: "https://www.radiofarda.com",
+						path: "api",
+						endpoints: ["zpoqie-kqp"],
+						helpers: ["somso2e"]
+					},
+					{
+						name: "خبرگزاری مهر",
+						url: "https://www.mehrnews.com/",
+						path: null,
+						endpoints: ["rss"],
+						helpers: ["supinic"]
+					}
+				]
+			},
+			{
+				code: "fr",
+				language: "french",
+				sources: [
+					{
+						name: "Europe 1",
+						url: "https://www.europe1.fr",
+						path: null,
+						endpoints: ["rss.xml", "rss/faits-divers.xml"],
+						helpers: ["supinic"]
+					}
+				]
+			},
+			{
+				code: "sg",
+				language: "english",
+				sources: [
+					{
+						name: "CNA",
+						url: "https://www.channelnewsasia.com",
+						path: "api/v1",
+						endpoints: ["rss-outbound-feed?_format=xml&category=10416"],
+						helpers: ["supinic"]
+					}
+				]
+			},
+			{
+				code: "me",
+				language: "montenegrin",
+				sources: [
+					{
+						name: "RTCG",
+						url: "http://www.rtcg.me",
+						path: "vijesti",
+						endpoints: ["rss.html", "drustvo/rss.html", "region/rss.html"],
+						helpers: ["supinic"]
+					}
+				]
 			}
 		],
 
@@ -403,7 +603,7 @@ module.exports = {
 				: "";
 
 			return {
-				reply: sb.Utils.removeHTML(`${title}${separator}${content} ${delta}`)
+				reply: sb.Utils.fixHTML(sb.Utils.removeHTML(`${title}${separator}${content} ${delta}`))
 			};
 		}
 

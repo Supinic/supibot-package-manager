@@ -44,8 +44,8 @@ module.exports = {
 			"yaml"
 		]
 	})),
-	Code: (async function randomPastebin (context) {
-		let data = await this.getCacheData("paste-list");
+	Code: (async function randomPastebin (context, syntax) {
+		let data = await sb.Cache.getByPrefix("random-pastebin-paste-list");
 		if (!data) {
 			const response = await sb.Got("GenericAPI", {
 				url: "https://scrape.pastebin.com/api_scraping.php",
@@ -55,7 +55,7 @@ module.exports = {
 				}
 			});
 
-			const list = response.body.map(i => ({
+			data = response.body.map(i => ({
 				key: i.key,
 				title: (i.title === "") ? null : i.title,
 				posted: new sb.Date(i.date * 1000),
@@ -65,21 +65,32 @@ module.exports = {
 				size: Number(i.size)
 			}));
 
-			data = list;
-			await this.setCacheData("paste-list", list, {
-				expiry: 60_000
+			await sb.Cache.setByPrefix("random-pastebin-paste-list", data, {
+				expiry: 300_000
 			});
 		}
 
-		if (context.params.syntax) {
-			data = data.filter(i => i.syntax.toLowerCase() === context.params.syntax);
+		if (syntax === "list") {
+			const list = [...new Set(data.map(i => i.syntax))].sort();
+			return {
+				cooldown: 2500,
+				reply: `List of currently available languages: ${list.join(", ")}`
+			};
 		}
 
-		const paste = sb.Utils.randArray(data);
+		let filteredData = data;
+		if (syntax || context.params.syntax) {
+			const inputSyntax = context.params.syntax ?? syntax;
+			filteredData = data.filter(i => i.syntax.toLowerCase() === inputSyntax.toLowerCase());
+		}
+
+		const paste = sb.Utils.randArray(filteredData);
 		if (!paste) {
+			const list = [...new Set(data.map(i => i.syntax))].sort();
 			return {
 				success: false,
-				reply: `Could not find any pastes matching your search!`
+				cooldown: 2500,
+				reply: `Could not find any pastes matching your search! Currently available languages: ${list.join(", ")}`
 			};
 		}
 
@@ -98,7 +109,24 @@ module.exports = {
 	}),
 	Dynamic_Description: (async (prefix, values) => {
 		const { languages } = values.getStaticData();
-		const list = languages.map(i => `<li>${i}</li>`).join("");
+		const data = await sb.Cache.getByPrefix("random-pastebin-paste-list");
+
+		let list;
+		let listDescription;
+		if (data && data.length !== 0) {
+			const uniques = new Set(data.map(i => i.syntax));
+			list = [...uniques]
+				.filter(Boolean)
+				.sort()
+				.map(i => `<li>${i}</li>`)
+				.join("");
+
+			listDescription = "Currently available languages:";
+		}
+		else {
+			list = languages.map(i => `<li>${i}</li>`).join("");
+			listDescription = "Common language list (<a href=\"//pastebin.com/languages\">full list</a>):";
+		}
 
 		return [
 			"Fetches a random programming related paste, posted recently (up to ~1 hour old).",
@@ -110,11 +138,16 @@ module.exports = {
 			"Posts a summary of the paste.",
 			"",
 
+			`<code>${prefix}rpb (language)</code>`,
 			`<code>${prefix}rpb syntax:(language)</code>`,
 			"Posts a summary of a paste, only using your provided programming language.",
 			"",
 
-			`Common language list (<a href="//pastebin.com/languages">full list</a>):`,
+			`<code>${prefix}rpb list</code>`,
+			"Shows a list of currently available languages.",
+			"",
+
+			listDescription,
 			`<ul>${list}</ul>`
 		];
 	})

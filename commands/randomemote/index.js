@@ -6,8 +6,10 @@ module.exports = {
 	Description: "Fetches a random emote from the scope of current channel. Configurable with parameters.",
 	Flags: ["pipe","use-params"],
 	Params: [
+		{ name: "7tv", type: "boolean" },
 		{ name: "animated", type: "boolean" },
 		{ name: "bttv", type: "boolean" },
+		{ name: "channel", type: "string" },
 		{ name: "ffz", type: "boolean" },
 		{ name: "global", type: "boolean" },
 		{ name: "repeat", type: "boolean" },
@@ -36,7 +38,50 @@ module.exports = {
 			emotes = await context.platform.fetchGlobalEmotes();
 		}
 
-		const { animated, bttv, ffz, global: globalEmotes, sub, twitch } = context.params;
+		const {
+			"7tv": sevenTv,
+			animated,
+			bttv,
+			channel,
+			ffz,
+			global: globalEmotes,
+			sub,
+			twitch
+		} = context.params;
+
+		let channelPrefixRegex;
+		if (channel) {
+			let channelPrefix;
+			const channelData = sb.Channel.get(channel, sb.Platform.get("twitch"));
+
+			if (channelData) {
+				channelPrefix = await channelData.getCacheData("emote-prefix");
+			}
+
+			if (!channelPrefix) {
+				const response = await sb.Got("Leppunen", `v2/twitch/user/${channel}`);
+				if (response.statusCode === 404) {
+					return {
+						success: false,
+						reply: `Provided channel does not exist on Twitch!`
+					};
+				}
+				else if (!response.body.emotePrefix) {
+					return {
+						success: false,
+						reply: `Provided channel does not have a subscriber emote prefix!`
+					};
+				}
+
+				channelPrefix = response.body.emotePrefix;
+				if (channelData) {
+					await channelData.setCacheData("emote-prefix", channelPrefix, { expiry: 30 * 864e5 }); // cache for 30 days
+				}
+			}
+
+			channelPrefixRegex = new RegExp(`^${channelPrefix}[A-Z0-9][A-Za-z0-9]*$`);
+		}
+
 		emotes = emotes.filter(i => {
 			if (animated === true && !i.animated || animated === false && i.animated) {
 				return false;
@@ -45,6 +90,9 @@ module.exports = {
 				return false;
 			}
 			if (ffz === true && i.type !== "ffz" || ffz === false && i.type === "ffz") {
+				return false;
+			}
+			if (sevenTv === true && i.type !== "7tv" || sevenTv === false && i.type === "7tv") {
 				return false;
 			}
 			if (globalEmotes === true && !i.global || globalEmotes === false && i.global) {
@@ -57,6 +105,9 @@ module.exports = {
 				return false;
 			}
 			if (context.params.regex && !context.params.regex.test(i.name)) {
+				return false;
+			}
+			if (channelPrefixRegex && !channelPrefixRegex.test(i.name)) {
 				return false;
 			}
 
@@ -99,10 +150,14 @@ module.exports = {
 			"You can use parameters to force-include or exclude several of types of emotes.",
 			`Maximum amount of words: ${limit}`,
 			"",
-			
+
 			`<code>${prefix}rem</code>`,
 			`<code>${prefix}randomemote</code>`,
-			"Posts any emote.",
+			"Posts any single emote.",
+			"",
+
+			`<code>${prefix}rem (number)</code>`,
+			`Posts any number of emotes, in the limit from 1 to ${limit}.`,
 			"",
 
 			`<code>${prefix}rem regex:(regular expression)</code>`,
@@ -113,6 +168,10 @@ module.exports = {
 
 			`<code>${prefix}rem repeat:false</code>`,
 			"If provided like this, then only unique emotes will be posted - no repeats.",
+			"",
+
+			`<code>${prefix}rem channel:(channel)</code>`,
+			"For a provided Twitch channel, this will attempt to use only its subscriber emotes that Supibot has available",
 			"",
 
 			`<code>${prefix}rem animated:true</code>`,
@@ -128,6 +187,7 @@ module.exports = {
 			"E.g. <code>global:false</code> will random non-global emotes.",
 			"",
 
+			`<code>${prefix}rem 7tv:true</code>`,
 			`<code>${prefix}rem bttv:true</code>`,
 			`<code>${prefix}rem ffz:true</code>`,
 			`<code>${prefix}rem sub:true</code>`,
@@ -137,6 +197,7 @@ module.exports = {
 			"Combining these will just result in zero emotes, as they don't share their types.",
 			"",
 
+			`<code>${prefix}rem 7tv:false</code>`,
 			`<code>${prefix}rem animated:false</code>`,
 			`<code>${prefix}rem bttv:false</code>`,
 			`<code>${prefix}rem global:false</code>`,

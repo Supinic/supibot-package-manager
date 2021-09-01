@@ -4,35 +4,143 @@ module.exports = {
 	Author: "supinic",
 	Cooldown: 10000,
 	Description: "Posts various statistics regarding you or other users, e.g. total afk time.",
-	Flags: ["mention","pipe"],
-	Params: null,
+	Flags: ["mention","pipe","use-params"],
+	Params: [
+		{ name: "recalculate", type: "boolean" }
+	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({
 		types: [
 			{
 				name: "aliases",
-				aliases: [],
-				description: "Checks the global data for user-created supibot command aliases.",
-				execute: async () => {
-					const [alias, users] = await Promise.all([
+				aliases: ["alias"],
+				description: "Checks the global (or-use data for user-created supibot command aliases.",
+				execute: async (context, type, user) => {
+					if (user) {
+						const userData = await sb.User.get(user);
+						if (!userData) {
+							return {
+								success: false,
+								reply: `Provided user does not exist!`
+							};
+						}
+
+						const [aliases, copyData] = await Promise.all([
+							sb.Query.getRecordset(rs => rs
+								.select("COUNT(*) AS Count")
+								.from("data", "Custom_Command_Alias")
+								.where("User_Alias = %n", userData.ID)
+								.single()
+								.flat("Count")
+							),
+							sb.Query.getRecordset(rs => rs
+								.select("Copy.User_Alias AS Copier")
+								.from("data", "Custom_Command_Alias")
+								.where("Custom_Command_Alias.User_Alias = %n", userData.ID)
+								.join({
+									alias: "Copy",
+									toTable: "Custom_Command_Alias",
+									on: "Copy.Parent = Custom_Command_Alias.ID"
+								})
+								.flat("Copier")
+							)
+						]);
+
+						const copies = copyData.length;
+						const users = new Set(copyData).size;
+						const [who, whose] = (context.user === userData) ? ["You", "your"] : ["They", "their"];
+
+						return {
+							reply: sb.Utils.tag.trim `
+								${who} currently have ${aliases} command aliases,
+								and ${users} distinct users have created ${copies} copies of ${whose} aliases.
+							`
+						};
+					}
+
+					const [aliases, copies, users] = await Promise.all([
 						sb.Query.getRecordset(rs => rs
 							.select("MAX(ID) AS Max")
-							.from("chat_data", "Custom_Command_Alias")
+							.from("data", "Custom_Command_Alias")
+							.single()
+							.flat("Max")
+						),
+						sb.Query.getRecordset(rs => rs
+							.select("COUNT(*) AS Count")
+							.from("data", "Custom_Command_Alias")
+							.where("Parent IS NOT NULL")
+							.single()
+							.flat("Count")
 						),
 						sb.Query.getRecordset(rs => rs
 							.select("COUNT(DISTINCT User_Alias) AS Count")
-							.from("chat_data", "Custom_Command_Alias")
+							.from("data", "Custom_Command_Alias")
+							.single()
+							.flat("Count")
 						)
 					]);
 
 					return {
-						reply: `${alias.Max} command aliases have been created so far, used by ${users.Count} users in total.`
+						reply: sb.Utils.tag.trim `
+							${aliases} command aliases have been created so far
+							(out of which, ${copies} are direct copies of others),
+							used by ${users} users in total.
+						`
 					};
 				}
 			},
 			{
+				name: "alias-names",
+				aliases: ["aliasnames"],
+				description: "Checks statistics related to custom command alias names.",
+				execute: async (context, type, name) => {
+					if (name) {
+						const aliases = await sb.Query.getRecordset(rs => rs
+							.select("Parent")
+							.from("data", "Custom_Command_Alias")
+							.where("Name COLLATE utf8mb4_bin = %s", name)
+						);
+
+						if (aliases.length === 0) {
+							return {
+								reply: `Currently, nobody has the "${name}" alias.`
+							};
+						}
+
+						const copies = aliases.filter(i => i.Parent);
+						return {
+							reply: sb.Utils.tag.trim `
+								Currently, ${aliases.length} users have the "${name}" alias.
+								Out of those, ${copies.length} are copies of a different alias.
+							`
+						};
+					}
+					else {
+						const aliases = await sb.Query.getRecordset(rs => rs
+							.select("Name", "COUNT(*) AS Amount")
+							.from("data", "Custom_Command_Alias")
+							.groupBy("Name COLLATE utf8mb4_bin")
+							.orderBy("COUNT(*) DESC")
+						);
+
+						const top = aliases
+							.slice(0, 10)
+							.map((i, ind) => `${ind + 1}) ${i.Name}: ${i.Amount}x`)
+							.join(", ");
+
+						return {
+							reply: sb.Utils.tag.trim `
+								Currently, ${aliases.length} unique alias names are in use.
+								The 10 most used names are:
+								${top}
+							`
+						};
+					}
+				}
+			},
+			{
 				name: "afk",
-				aliases: ["total-afk", "gn", "brb", "food", "shower", "lurk", "poop", "work", "study"],
+				aliases: ["total-afk", "gn", "brb", "food", "shower", "lurk", "poop", "work", "study", "pppoof"],
 				description: "Checks the total time you (or another user) have been afk for. Each status type is separate - you can use total-afk to check all of them combined.",
 				execute: async (context, type, user) => {
 					const targetUser = (user)
@@ -91,7 +199,7 @@ module.exports = {
 			{
 				name: "sr",
 				aliases: [],
-				description: "Checks various sr statistics on supinic's channel.",
+				description: "Checks various song requests statistics on supinic's channel.",
 				execute: async function execute (context, type, ...args) {
 					let branch;
 					let targetUser = null;
@@ -125,7 +233,7 @@ module.exports = {
 				helpers: {
 					fetchUserStats: async function (targetUser) {
 						const requests = await sb.Query.getRecordset(rs => rs
-							.select("Link", "Length", "Start_Time", "End_Time")
+							.select("Link", "Length", "Start_Time", "End_Time", "Video_Type")
 							.from("chat_data", "Song_Request")
 							.where("User_Alias = %n", targetUser.ID)
 						);
@@ -149,17 +257,22 @@ module.exports = {
 							counter[video.Link]++;
 							totalLength += (video.End_Time ?? video.Length) - (video.Start_Time ?? 0);
 							if (currentMax < counter[video.Link]) {
-								mostRequested = video.Link;
+								mostRequested = video;
 								currentMax = counter[video.Link];
 							}
 						}
 
+						const videoType = await sb.Query.getRow("data", "Video_Type");
+						await videoType.load(mostRequested.Video_Type);
+						const link = videoType.values.Link_Prefix.replace("$", mostRequested.Link);
+
+						const uniques = Object.keys(counter).length;
 						const total = sb.Utils.timeDelta(sb.Date.now() + totalLength * 1000, true);
 						return {
 							reply: sb.Utils.tag.trim `
-									Videos requested: ${requests.length}, for a total runtime of ${total}.
-									The most requested video is ${mostRequested} - queued ${currentMax} times.
-								`
+								Videos requested: ${requests.length} (${uniques} unique), for a total runtime of ${total}.
+								The most requested video is ${link} - queued ${currentMax} times.
+							`
 						};
 					},
 					fetchVideoStats: async function (videoID) {
@@ -183,9 +296,9 @@ module.exports = {
 						const lastDelta = sb.Utils.timeDelta(requests[0].Added);
 						return {
 							reply: sb.Utils.tag.trim `
-									This video has been requested ${requests.length} times.
-									It was last requested ${lastDelta}.
-								`
+								This video has been requested ${requests.length} times.
+								It was last requested ${lastDelta}.
+							`
 						};
 					}
 				}
@@ -351,8 +464,21 @@ module.exports = {
 							reply: `No Markov module is currently available!`
 						};
 					}
+					else if (!channelName) {
+						return {
+							success: false,
+							reply: `No channel provided!`
+						};
+					}
 
 					const channelData = sb.Channel.get(channelName ?? "forsen");
+					if (!channelData) {
+						return {
+							success: false,
+							reply: `Provided channel does not exist!`
+						};
+					}
+
 					const markov = module.data.markovs.get(channelData.ID);
 					if (!markov) {
 						return {
@@ -373,7 +499,7 @@ module.exports = {
 			{
 				name: "suggestion",
 				aliases: ["suggest", "suggestions"],
-				description: "Returns quick stats about a markov module in a given channel.",
+				description: "Posts your (or someone else's) amount of suggestions, and the percentage of total. Also posts some neat links.",
 				execute: async (context, type, user) => {
 					const userData = (user)
 						? await sb.User.get(user)
@@ -398,6 +524,116 @@ module.exports = {
 							Global suggestion stats: https://supinic.com/data/suggestion/stats
 						`
 					};
+				}
+			},
+			{
+				name: "twitchlotto",
+				aliases: ["tl"],
+				description: "Posts stats for the $twitchlotto command - globally, or for a selected channel. You can use <code>recalculate:true</code> to force an update for the statistics in a specific channel.",
+				execute: async (context, type, channel) => {
+					if (channel) {
+						const lottoData = await sb.Query.getRecordset(rs => rs
+							.select("Amount", "Scored", "Tagged")
+							.from("data", "Twitch_Lotto_Channel")
+							.where("Name = %s", channel)
+							.single()
+						);
+
+						if (!lottoData) {
+							return {
+								success: false,
+								reply: `Provided channel does not exists in the twitchlotto command!`
+							};
+						}
+
+						const obj = {
+							total: lottoData.Amount,
+							scored: lottoData.Scored,
+							tagged: lottoData.Tagged
+						};
+
+						if (context.params.recalculate) {
+							const [total, scored, tagged, deleted] = await Promise.all([
+								sb.Query.getRecordset(rs => rs
+									.select("COUNT(*) AS Count")
+									.from("data", "Twitch_Lotto")
+									.where("Channel = %s", channel)
+									.where("Available = %b OR Available IS NULL", true)
+									.single()
+									.flat("Count")
+								),
+								sb.Query.getRecordset(rs => rs
+									.select("COUNT(*) AS Count")
+									.from("data", "Twitch_Lotto")
+									.where("Channel = %s", channel)
+									.where("Score IS NOT NULL")
+									.where("Available = %b OR Available IS NULL", true)
+									.single()
+									.flat("Count")
+								),
+								sb.Query.getRecordset(rs => rs
+									.select("COUNT(*) AS Count")
+									.from("data", "Twitch_Lotto")
+									.where("Channel = %s", channel)
+									.where("Score IS NOT NULL")
+									.where("Adult_Flags IS NOT NULL")
+									.where("Available = %b OR Available IS NULL", true)
+									.single()
+									.flat("Count")
+								),
+								sb.Query.getRecordset(rs => rs
+									.select("COUNT(*) AS Count")
+									.from("data", "Twitch_Lotto")
+									.where("Channel = %s", channel)
+									.where("Available = %b", false)
+									.single()
+									.flat("Count")
+								)
+							]);
+
+							await sb.Query.getRecordUpdater(ru => ru
+								.update("data", "Twitch_Lotto_Channel")
+								.set("Amount", total)
+								.set("Scored", scored)
+								.set("Tagged", tagged)
+								.set("Unavailable", deleted)
+								.where("Name = %s", channel)
+							);
+
+							obj.scored = scored;
+							obj.tagged = tagged;
+							obj.total = total;
+						}
+
+						const scorePercent = sb.Utils.round(obj.scored / obj.total * 100, 2);
+						const tagPercent = sb.Utils.round(obj.tagged / obj.total * 100, 2);
+
+						return {
+							reply: sb.Utils.tag.trim `
+								Channel "${channel}" has ${sb.Utils.groupDigits(obj.total)} TwitchLotto images in total.
+								${sb.Utils.groupDigits(obj.scored)} (${scorePercent}%) have been rated by the NSFW AI,
+								and out of those, ${sb.Utils.groupDigits(obj.tagged)} (${tagPercent}%) have been flagged by contributors.
+							`
+						};
+					}
+					else {
+						const lottoData = await sb.Query.getRecordset(rs => rs
+							.select("SUM(Amount) AS Amount", "SUM(Scored) AS Scored", "SUM(Tagged) AS Tagged")
+							.from("data", "Twitch_Lotto_Channel")
+							.single()
+						);
+
+						const scorePercent = sb.Utils.round(lottoData.Scored / lottoData.Amount * 100, 2);
+						const tagPercent = sb.Utils.round(lottoData.Tagged / lottoData.Amount * 100, 2);
+
+						return {
+							reply: sb.Utils.tag.trim `
+								The TwitchLotto database has ${sb.Utils.groupDigits(lottoData.Amount)} images in total.
+								${sb.Utils.groupDigits(lottoData.Scored)} (${scorePercent}%) have been rated by the NSFW AI,
+								and out of those, ${sb.Utils.groupDigits(lottoData.Tagged)} (${tagPercent}%) have been flagged by contributors.
+							`
+						};
+					}
 				}
 			}
 		]

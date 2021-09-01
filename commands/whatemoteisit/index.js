@@ -9,44 +9,71 @@ module.exports = {
 		{ name: "linkOnly", type: "boolean" }
 	],
 	Whitelist_Response: null,
-	Static_Data: null,
-	Code: (async function whatEmoteIsIt (context, emote) {
-		const { statusCode, body: response } = await sb.Got("Leppunen", {
-			url: `twitch/emotes/${emote}`,
+	Static_Data: (() => ({
+		regexV1: /^\d+$/,
+		regexV2: /^emotesv2_[a-z0-9]{32}$/
+	})),
+	Code: (async function whatEmoteIsIt (context, input) {
+		if (!input) {
+			return {
+				success: false,
+				reply: `No emote name or ID provided!`
+			};
+		}
+
+		if (context.platform.Name === "twitch" && context.append.emotes) {
+			input = context.append.emotes.split(":")[0];
+		}
+
+		const { regexV1, regexV2 } = this.staticData;
+		const isEmoteID = (regexV1.test(input) || regexV2.test(input));
+
+		const response = await sb.Got("Leppunen", {
+			url: `v2/twitch/emotes/${input}`,
+			searchParams: (isEmoteID) ? { id: "true" } : {},
 			throwHttpErrors: false
 		});
 
-		if (statusCode >= 500) {
-			const { error } = response;
+		if (response.statusCode >= 500) {
+			const { error } = response.body;
 			await sb.Platform.get("twitch").pm(
-				`twitch/emotes API failed for emote "${emote}" - server error ${statusCode}: ${error}`,
+				`twitch/emotes API failed for "${input}" - server error ${response.statusCode}: ${error ?? "(unknown)"}`,
 				"leppunen"
 			);
 
 			return {
 				success: false,
-				reply: `API failed with error ${statusCode}: ${error}!`
+				reply: `API failed with error ${response.statusCode}: ${error}!`
 			};
 		}
-		else if (statusCode !== 200) {
+		else if (response.statusCode !== 200) {
 			return {
 				success: false,
-				reply: response.error
+				reply: response.body.error
 			};
 		}
 
-		const { channel, channelid: cid, emotecode, emoteid, channellogin: login, tier } = response;
+		const {
+			channelName,
+			channelLogin,
+			channelID,
+			emoteAssetType: emoteType,
+			emoteCode,
+			emoteID,
+			emoteState,
+			emoteTier
+		} = response.body;
+
 		const originID = await sb.Query.getRecordset(rs => rs
 			.select("ID")
 			.from("data", "Origin")
-			.where("Emote_ID = %s", emoteid)
+			.where("Emote_ID = %s", emoteID)
 			.limit(1)
 			.single()
 			.flat("ID")
 		);
 
-		const emoteLink = `https://twitchemotes.com/emotes/${emoteid}`;
-		const cdnLink = `https://static-cdn.jtvnw.net/emoticons/v1/${emoteid}/3.0`;
+		const cdnLink = `https://static-cdn.jtvnw.net/emoticons/v2/${emoteID}/default/dark/3.0`;
 		if (context.params.linkOnly) {
 			return {
 				reply: cdnLink
@@ -54,26 +81,35 @@ module.exports = {
 		}
 
 		let tierString;
-		if (tier && login) {
-			let channelString = `@${channel}`;
-			if (channel.toLowerCase() !== login.toLowerCase()) {
-				channelString = `@${login} (${channel})`;
+		if (emoteTier && channelLogin) {
+			let channelString = `@${channelName}`;
+			if (channelName.toLowerCase() !== channelLogin.toLowerCase()) {
+				channelString = `@${channelLogin} (${channelName})`;
 			}
 
-			tierString = `tier ${tier} sub emote to channel ${channelString}`;
+			tierString = `tier ${emoteTier} ${emoteType.toLowerCase()} sub emote to channel ${channelString}`;
 		}
 		else {
-			tierString = `special ${channel} emote`;
+			tierString = `special ${emoteType.toLowerCase()} ${channelName} emote`;
 		}
 
 		const originString = (originID)
 			? `This emote has origin info - use the ${sb.Command.prefix}origin command.`
 			: "";
 
+		let emoteLink;
+		if (channelName) {
+			emoteLink = `https://twitchemotes.com/channels/${channelID}/emotes/${emoteID}`;
+		}
+		else {
+			emoteLink = `https://twitchemotes.com/global/emotes/${emoteID}`;
+		}
+
+		const active = (emoteState === "INACTIVE") ? "inactive" : "";
 		return {
-			reply: (channel)
-				? `${emotecode} (ID ${emoteid}) - ${tierString}. ${emoteLink} https://twitchemotes.com/channels/${cid} ${cdnLink} ${originString}`
-				: `${emotecode} (ID ${emoteid}) - global Twitch emote. ${emoteLink} ${cdnLink} ${originString}`
+			reply: (channelName)
+				? `${emoteCode} (ID ${emoteID}) - ${active} ${tierString}. ${emoteLink} ${cdnLink} ${originString}`
+				: `${emoteCode} (ID ${emoteID}) - ${active} global Twitch emote. ${emoteLink} ${cdnLink} ${originString}`
 		};
 	}),
 	Dynamic_Description: null

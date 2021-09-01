@@ -7,14 +7,17 @@ module.exports = {
 	Flags: ["mention","use-params"],
 	Params: [
 		{ name: "channel", type: "string" },
+		{ name: "clear", type: "boolean" },
 		{ name: "command", type: "string" },
+		{ name: "index", type: "number" },
 		{ name: "invocation", type: "string" },
 		{ name: "type", type: "string" },
+		{ name: "string", type: "string" },
 		{ name: "user", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({
-		availableTypes: ["Blacklist", "Online-only", "Offline-only"]
+		availableTypes: ["Arguments", "Blacklist", "Online-only", "Offline-only"]
 	})),
 	Code: (async function ban (context) {
 		const { invocation } = context;
@@ -115,24 +118,31 @@ module.exports = {
 
 		const isAdmin = Boolean(context.user.Data.administrator);
 		if (!options.Channel && !isAdmin) {
+			if (context.privateMessage) {
+				return {
+					success: false,
+					reply: `When using this command in whispers, you must provide a channel with the "channel:(name)" parameter!`
+				};
+			}
+
 			options.Channel = context.channel.ID;
 		}
 
 		if (options.Channel && !isAdmin) {
 			const channelData = sb.Channel.get(options.Channel);
-			const permissions = await context.getUserPermissions("array", ["admin", "owner", "ambassador"], {
+			const permissions = await context.getUserPermissions({
 				channel: channelData,
 				platform: channelData?.Platform
 			});
 
-			if (permissions.every(i => !i)) {
+			if (permissions.flag === sb.User.permissions.regular) {
 				return {
 					success: false,
 					reply: "Can't do that in this channel!"
 				};
 			}
 
-			const channelPermissions = permissions[1] || permissions[2];
+			const channelPermissions = permissions.is("ambassador") || permissions.is("channelOwner");
 			if (!options.User_Alias && !options.Command && channelPermissions) {
 				return {
 					success: false,
@@ -167,19 +177,90 @@ module.exports = {
 					reply: "This ban has not been created by you, so you cannot modify it!"
 				};
 			}
+			else if (type === "Arguments") {
+				const { clear = false, index, string } = context.params;
+				if (invocation === "ban") {
+					if (!existing.Active) {
+						await existing.toggle();
+					}
+
+					for (const item of existing.Data.args) {
+						if (item.index === index && item.string === string) {
+							return {
+								success: false,
+								reply: `This combination of index and string in an Arguments filter is already banned!`
+							};
+						}
+					}
+
+					if (sb.Utils.isValidInteger(index) && typeof string === "string") {
+						existing.Data.args.push({ index, string });
+
+						await existing.saveProperty("Data");
+						return {
+							reply: `Successfully added a new item to Arguments filter (ID ${existing.ID})`
+						};
+					}
+
+					return {
+						success: false,
+						reply: `Invalid combination of parameters for the Argument type provided!`
+					};
+				}
+				else if (invocation === "unban") {
+					if (sb.Utils.isValidInteger(index) && typeof string === "string") {
+						for (let i = 0; i < existing.Data.args.length; i++) {
+							const item = existing.Data.args[i];
+							if (item.index === index && item.string === string) {
+								existing.Data.args.splice(i, 1);
+								await existing.saveProperty("Data");
+
+								return {
+									reply: `Succesfully removed an item from the Arguments filter (ID ${existing.ID})`
+								};
+							}
+						}
+
+						return {
+							success: false,
+							reply: `No matching items found in the Arguments filter!`
+						};
+					}
+					else if (clear) {
+						existing.Data.args = [];
+						await existing.saveProperty("Data");
+
+						return {
+							reply: `Successfully cleared all items from the Arguments filter (ID ${existing.ID})`
+						};
+					}
+					else if (existing.Active) {
+						await existing.toggle();
+						return {
+							reply: `Succesfully disabled Arguments filter (ID ${existing.ID}). Its items are still available, it just isn't active.`
+						};
+					}
+
+					return {
+						success: false,
+						reply: `Invalid combination of parameters for the Argument type provided!`
+					};
+				}
+			}
 			else if ((existing.Active && invocation === "ban") || (!existing.Active && invocation === "unban")) {
 				return {
 					success: false,
 					reply: `That combination is already ${invocation}ned!`
 				};
 			}
+			else {
+				await existing.toggle();
 
-			await existing.toggle();
-
-			const [prefix, suffix] = (existing.Active) ? ["", " again"] : ["un", ""];
-			return {
-				reply: `Succesfully ${prefix}banned${suffix}.`
-			};
+				const [prefix, suffix] = (existing.Active) ? ["", " again"] : ["un", ""];
+				return {
+					reply: `Succesfully ${prefix}banned${suffix}.`
+				};
+			}
 		}
 		else {
 			if (invocation === "unban") {
@@ -187,6 +268,21 @@ module.exports = {
 					success: false,
 					reply: "This combination has not been banned yet, so it cannot be unbanned!"
 				};
+			}
+
+			if (type === "Arguments") {
+				const { index, string } = context.params;
+				if (sb.Utils.isValidInteger(index) && typeof string === "string") {
+					options.Data = JSON.stringify({
+						args: [{ index, string }]
+					});
+				}
+				else {
+					return {
+						success: false,
+						reply: `Invalid combination of parameters for the Argument type! "index" and "string" must be provided.`
+					};
+				}
 			}
 
 			const ban = await sb.Filter.create(options);
@@ -234,6 +330,13 @@ module.exports = {
 			"Just like <code>offline-only</code>, but reverse - result will be available only in online channels.",
 			"",
 
+			`<code>${prefix}ban type:arguments index:(number) string:(text)</code>`,
+			"Disables the use of a specific argument position for given text.",
+			`If you use <code>${prefix}ban type:arguments</code> again with the same combination of channel/command/user, then the arguments will stack. To remove or disable, see the help for <code>${prefix}unban type:arguments</code> below.`,
+			`Example: <code>${prefix}ban command:rm index:0 string:livestreamfail</code> will ban the use of <code>${prefix}rm livestreamfail</code>. This is because the first argument (index 0) is the subreddit name and it matches the text exactly.`,
+			`Example: <code>${prefix}ban command:remind index:1 string:hello</code> will ban the use of <code>${prefix}remind (anyone) hello</code>. This is because "hello" is the second argument (index 1) and it matches.`,
+			"",
+
 			"---",
 			"",
 
@@ -242,7 +345,20 @@ module.exports = {
 			`<code>${prefix}unban type:offline-only (...)</code>`,
 			`<code>${prefix}unban type:online-only (...)</code>`,
 			"Unbans any previously mentioned combination.",
-			"Make sure to use the correct type - <code>Blacklist</code> is again default."
+			"Make sure to use the correct type - <code>Blacklist</code> is again default.",
+			"",
+
+			`<code>${prefix}unban type:arguments index:(number) string:(string) (...)</code>`,
+			`Removes a single item from a previously added Arguments-type filter - if it exists.`,
+			"",
+
+			`<code>${prefix}unban type:arguments (...)</code>`,
+			`Disables the Arguments-type filter, leaving its items intact. You can re-enable it by simply using <code>${prefix}ban</code> with the same channel/command/user combination.`,
+			"",
+
+			`<code>${prefix}unban type:arguments clear:true (...)</code>`,
+			`Instead of disabling the Arguments filter, this will remove all of its items.`,
+			""
 		];
 	})
 };

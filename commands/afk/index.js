@@ -47,7 +47,18 @@ module.exports = {
 			{
 				name: "shower",
 				status: "now taking a shower",
-				text: (context, text) => (text) ? `${text} 🚿` : " "
+				text: (context, text) => {
+					if (text) {
+						return `${text} 🚿`;
+					}
+
+					if (sb.Utils.random(1, 100) === 1) {
+						return " 🐏🏡 🤠🚿";
+					}
+					else {
+						return " 😏🚿";
+					}
+				}
 			},
 			{
 				name: "poop",
@@ -98,7 +109,7 @@ module.exports = {
 		]
 	})),
 	Code: (async function afk (context, ...args) {
-		if (context.privateMessage && sb.AwayFromKeyboard.data.some(i => i.User_Alias === context.user.ID)) {
+		if (context.privateMessage && sb.AwayFromKeyboard.data.has(context.user.ID)) {
 			return {
 				reply: "You are already AFK!"
 			};
@@ -108,7 +119,12 @@ module.exports = {
 		const target = this.staticData.invocations.find(i => i.name === invocation || i.aliases?.includes(invocation));
 
 		const text = await target.text(context, args.join(" ").trim());
-		await sb.AwayFromKeyboard.set(context.user, text, target.type ?? invocation, false);
+		await sb.AwayFromKeyboard.set(context.user, {
+			Text: text,
+			Status: target.type ?? invocation,
+			Silent: false,
+			Interrupted_ID: null
+		});
 
 		return {
 			partialReplies: [

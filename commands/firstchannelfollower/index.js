@@ -17,18 +17,19 @@ module.exports = {
 				reply: "Could not match user to a Twitch user ID!"
 			};
 		}
-	
-		const { follows } = await sb.Got("Kraken", {
+
+		const response = await sb.Got("Kraken", {
 			url: `channels/${channelID}/follows`,
-			searchParams: new sb.URLParams()
-				.set("direction", "asc")
-				.toString()
-		}).json();
-	
+			searchParams: {
+				direction: "asc"
+			}
+		});
+
+		const { follows } = response.body;
 		const who = (!target || context.user.Name === target.toLowerCase())
 			? "you"
 			: "they";
-	
+
 		if (follows.length === 0) {
 			return {
 				reply: `${sb.Utils.capitalize(who)} don't have any followers.`
@@ -36,9 +37,13 @@ module.exports = {
 		}
 		else {
 			const follow = follows[0];
-			const delta = sb.Utils.timeDelta(new sb.Date(follow.created_at));
+			const followUser = (follow.user.name.toLowerCase() === context.user.Name)
+				? "you!"
+				: follow.user.name;
+
+			const delta = sb.Utils.timeDelta(new sb.Date(follow.created_at), false, true);
 			return {
-				reply: `The oldest follower ${who} have is ${follow.user.name}, since ${delta}.`
+				reply: `The longest following user ${who} have is ${followUser}, since ${delta}.`
 			};
 		}
 	}),

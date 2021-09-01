@@ -30,12 +30,11 @@ module.exports = {
 		}
 
 		const data = await sb.Query.getRecordset(rs => {
-			rs
-				.select("Result", "Invocation", "Arguments")
+			rs.select("Result", "Invocation", "Arguments")
 				.from("chat_data", "Command_Execution")
 				.where("Command <> %n", this.ID)
 				.where("User_Alias = %n", targetUser.ID)
-				.where("Executed > DATE_ADD(NOW(), INTERVAL -1 MINUTE)")
+				.where("Executed > DATE_ADD(NOW(), INTERVAL -5 MINUTE)")
 				.where("Result IS NOT NULL")
 				.orderBy("Executed DESC")
 				.limit(1)
@@ -51,7 +50,7 @@ module.exports = {
 			return rs;
 		});
 
-		if (!data.Result) {
+		if (!data || !data.Result) {
 			return {
 				success: false,
 				reply: "No recent command execution found!"

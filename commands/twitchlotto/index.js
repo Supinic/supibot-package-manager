@@ -7,7 +7,9 @@ module.exports = {
 	Flags: ["mention","whitelist"],
 	Params: [
 		{ name: "excludeChannel", type: "string" },
-		{ name: "excludeChannels", type: "string" }
+		{ name: "excludeChannels", type: "string" },
+		{ name: "forceUnscored", type: "boolean" },
+		{ name: "preferUnscored", type: "boolean" }
 	],
 	Whitelist_Response: "This command can't be executed here!",
 	Static_Data: (() => ({
@@ -41,7 +43,7 @@ module.exports = {
 				replacement: "ass"
 			}
 		],
-		maxRetries: 3,
+		maxRetries: 10,
 		createRecentUseCacheKey: (context) => ({
 			type: "recent-use",
 			user: context.user.ID,
@@ -55,6 +57,13 @@ module.exports = {
 				.from("data", "Twitch_Lotto_Channel")
 				.flat("Name")
 			);
+		}
+
+		if (context.params.forceUnscored && context.params.preferUnscored) {
+			return {
+				success: false,
+				reply: `Parameters forceUnscored and preferUnscored cannot be both set to true at the same time!`
+			};
 		}
 
 		let randomRoll = false;
@@ -86,7 +95,7 @@ module.exports = {
 				randomRoll = true;
 				channel = sb.Utils.randArray(this.data.channels);
 			}
-			
+
 			if (!this.data.channels.includes(channel)) {
 				return {
 					success: false,
@@ -94,7 +103,7 @@ module.exports = {
 				};
 			}
 		}
-	
+
 		// Preparation work that does not need to run more than once, so it is placed before the loop below.
 		if (!this.data.counts) {
 			let total = 0;
@@ -111,12 +120,38 @@ module.exports = {
 
 			this.data.counts.total = total;
 		}
-	
+
 		// Now try to find an image that is available.
 		let image = null;
 		let failedTries = 0;
 		while (image === null) {
-			if (channel) {
+			if (context.params.forceUnscored) {
+				if (!channel) {
+					return {
+						success: false,
+						reply: `When using the forceUnscored parameter, a channel must be provided!`
+					};
+				}
+
+				image = await sb.Query.getRecordset(rs => rs
+					.select("*")
+					.from("data", "Twitch_Lotto")
+					.where("Channel = %s", channel)
+					.where("Score IS NULL")
+					.where("Available IS NULL OR Available = %b", true)
+					.orderBy("RAND()")
+					.limit(1)
+					.single()
+				);
+
+				if (!image) {
+					return {
+						success: false,
+						reply: `All the images have been scored in this channel!`
+					};
+				}
+			}
+			else if (channel) {
 				const roll = sb.Utils.random(1, this.data.counts[channel]) - 1;
 				image = await sb.Query.getRecordset(rs => rs
 					.select("*")
@@ -146,7 +181,7 @@ module.exports = {
 					.single()
 				);
 			}
-	
+
 			if (image.Available === false) {
 				// discard this image. Loop will continue.
 				failedTries++;
@@ -159,20 +194,26 @@ module.exports = {
 					followRedirect: false,
 					url: `https://i.imgur.com/${image.Link}`
 				});
-	
+
 				if (statusCode !== 200) {
 					await sb.Query.getRecordUpdater(ru => ru
 						.update("data", "Twitch_Lotto")
 						.set("Available", false)
 						.where("Link = %s", image.Link)
 					);
-	
+
 					// discard this image. Loop will continue.
 					failedTries++;
 					image = null;
 				}
 			}
-	
+			else if (context.param.preferUnscored && image.Score !== null && failedTries < this.staticData.maxRetries) {
+				// "soft" re-attempting. only attempt again if the limit hasn't been reached.
+				// if it has, continue ahead and use the last image rolled, regardless of if it has the Score value or not
+				failedTries++;
+				image = null;
+			}
+
 			if (failedTries > this.staticData.maxRetries) {
 				// Was not able to find an image that existed.
 				return {
@@ -183,7 +224,7 @@ module.exports = {
 			}
 			// Success: image is not null, and loop will terminate.
 		}
-	
+
 		if (image.Score === null) {
 			const { statusCode, data } = await sb.Utils.checkPictureNSFW(`https://i.imgur.com/${image.Link}`);
 			if (statusCode !== 200) {
@@ -192,20 +233,35 @@ module.exports = {
 					reply: `Fetching image data failed! Status code ${statusCode}`
 				};
 			}
-	
+
 			const json = JSON.stringify({ detections: data.detections, nsfw_score: data.score });
 			await sb.Query.getRecordUpdater(ru => ru
 				.update("data", "Twitch_Lotto")
 				.set("Score", data.score)
 				.set("Data", json)
 				.where("Link = %s", image.Link)
-				.where("Channel = %s", image.Channel)
 			);
-	
+
+			const channels = await sb.Query.getRecordset(rs => rs
+				.select("Channel")
+				.from("data", "Twitch_Lotto")
+				.where("Link = %s", image.Link)
+				.flat("Channel")
+			);
+
+			for (const channel of channels) {
+				const row = await sb.Query.getRow("data", "Twitch_Lotto_Channel");
+				await row.load(channel);
+				if (row.values.Scored !== null) {
+					row.values.Scored += 1;
+					await row.save({ skipLoad: true });
+				}
+			}
+
 			image.Data = json;
 			image.Score = sb.Utils.round(data.score, 4);
 		}
-	
+
 		const detectionsString = [];
 		const { detections } = JSON.parse(image.Data);
 		for (const { replacement, string } of this.staticData.detections) {
@@ -213,10 +269,10 @@ module.exports = {
 			const strings = elements.map(i => `${replacement} (${Math.round(i.confidence * 100)}%)`);
 			detectionsString.push(...strings);
 		}
-	
+
 		const blacklistedFlags = context.channel?.Data.twitchLottoBlacklistedFlags ?? [];
 		const imageFlags = image.Adult_Flags ?? [];
-	
+
 		const illegalFlags = imageFlags.map(i => i.toLowerCase()).filter(i => blacklistedFlags.includes(i));
 		if (illegalFlags.length > 0) {
 			return {
@@ -224,7 +280,7 @@ module.exports = {
 				reply: `Cannot post image! These flags are blacklisted: ${illegalFlags.join(", ")}`
 			};
 		}
-	
+
 		await this.setCacheData(this.staticData.createRecentUseCacheKey(context), image.Link, {
 			expiry: 600_000
 		});
@@ -244,8 +300,9 @@ module.exports = {
 		const flagsString = (image.Adult_Flags)
 			? `Manual NSFW flags: ${image.Adult_Flags.join(", ")}`
 			: "";
-	
+
 		return {
+			removeEmbeds: ((image.Score > 0.5 && detections.length > 0) || (image.Score > 0.75)),
 			reply: sb.Utils.tag.trim `
 				NSFW score: ${sb.Utils.round(image.Score * 100, 2)}%
 				Detections: ${detectionsString.length === 0 ? "N/A" : detectionsString.join(", ")}
@@ -257,19 +314,35 @@ module.exports = {
 	}),
 	Dynamic_Description: (async (prefix) => {
 		const countData = await sb.Query.getRecordset(rs => rs
-			.select("Name", "Amount")
+			.select("Name", "Amount", "Scored")
 			.from("data", "Twitch_Lotto_Channel")
 			.orderBy("Amount DESC")
 		);
 
-		const channels = countData.map(i => `<li>${i.Name} - ${sb.Utils.groupDigits(i.Amount)}</li>`).join("");
+		const data = countData.map(i => sb.Utils.tag.trim `
+			<tr>
+				<td>${i.Name}</td>
+				<td data-order=${i.Amount}>${sb.Utils.groupDigits(i.Amount)}</td>
+				<td data-order=${i.Scored}>${sb.Utils.groupDigits(i.Scored)}</td>
+				<td>${sb.Utils.round(100 * i.Scored / i.Amount, 2)}%</td>
+			</tr>
+		`).join("\n");
+
 		return [
+			`<script>
+				window.addEventListener("load", () => $("#twitch-lotto-meta").DataTable({
+					searching: false,
+					lengthChange: false,
+					pageLength: 50
+				}));
+			</script>`,
+
 			"Rolls a random picture sourced from Twitch channels. The data is from the Twitchlotto website",
 			"You can specify a channel from the list below to get links only from there.",
 			"Caution! The images are not filtered by any means and can be NSFW.",
 			`You will get an approximation of "NSFW score" by an AI, so keep an eye out for that.`,
 			"",
-	
+
 			`<code>${prefix}tl</code>`,
 			`<code>${prefix}twitchlotto</code>`,
 			"Fetches a random image from any channel - channels with more images have a bigger chance to be picked",
@@ -278,9 +351,19 @@ module.exports = {
 			`<code>${prefix}tl random</code>`,
 			"Fetches a random image from any channel - all channels have the same chance to be picked",
 			"",
-			
+
 			`<code>${prefix}tl (channel)</code>`,
 			"Fetches a random image from the specified channel",
+			"",
+
+			`<code>${prefix}tl preferUnscored:true</code>`,
+			"If set to true, the command will prefer to roll images that have not been scored yet.",
+			"After several unsuccessful lookups however, the fetching is going to revert to an already scored image, if it wasn't able to find one.",
+			"",
+
+			`<code>${prefix}tl forceUnscored:true</code>`,
+			"If set to true, the command will forcefully roll an image that has no score set yet.",
+			"<b>WARNING:</b> Using the command with this parameter will result in a lot slower execution.",
 			"",
 
 			`<code>${prefix}tl excludeChannel:forsen</code>`,
@@ -290,9 +373,21 @@ module.exports = {
 			`<code>${prefix}tl excludeChannel:"forsen,nymn,pajlada"</code>`,
 			"Fetches a random image from any but the specified excluded channels, separated by spaces or commas",
 			"",
-	
+
 			"Supported channels:",
-			`<ul>${channels}</ul>`
+			`<table id="twitch-lotto-meta">
+				<thead>
+					<tr>
+						<th><b>Name</b></tdh>
+						<th><b>Total amount</b></th>
+						<th><b>Scored by API</b></th>
+						<th><b>Completion</b></th>
+					</tr>
+				</thead>
+				<tbody>
+					${data}
+				</tbody>					
+			</table>`
 		];
 	})
 };

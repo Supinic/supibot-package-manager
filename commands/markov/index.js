@@ -25,14 +25,14 @@ module.exports = {
 				}
 
 				const module = sb.ChatModule.get("async-markov-experiment");
-				if (!module) {
+				if (!module || !module.data.markovs) {
 					return;
 				}
 
 				const promises = [];
 				for (const [channelID, markov] of module.data.markovs.entries()) {
 					const words = markov.keys.sort();
-					
+
 					promises.push(sb.Cache.setByPrefix("markov-word-list", words, {
 						keys: { channelID },
 						expiry: 864e5
@@ -44,12 +44,25 @@ module.exports = {
 		});
 		this.data.updateCron.start();
 
+		const threshold = 250;
 		return {
 			limit: 20,
-			threshold: 250,
+			threshold,
 			destroy: (command) => {
 				if (command.data.updateCron) {
 					command.data.updateCron.destroy();
+				}
+
+				const module = sb.ChatModule.get("async-markov-experiment");
+				const fs = require("fs").promises;
+
+				for (const [channelID, markov] of module.data.markovs.entries()) {
+					if (markov.size < threshold) {
+						continue;
+					}
+
+					const fileName = `markov-dump-${new sb.Date().format("Y-m-d H:i")}-channel-${channelID}.json`;
+					fs.writeFile(`/code/markovs/${fileName}`, JSON.stringify(markov));
 				}
 			}
 		};
@@ -71,7 +84,7 @@ module.exports = {
 				reply: `No such channel exists!`
 			};
 		}
-		
+
 		const markov = module.data.markovs.get(targetChannel.ID);
 		if (!markov) {
 			return {
@@ -81,7 +94,8 @@ module.exports = {
 		}
 
 		if (context.params.debug) {
-			if (!await context.getUserPermissions("all", ["admin"])) {
+			const permissions = await context.getUserPermissions();
+			if (!permissions.is("administrator")) {
 				return {
 					success: false,
 					reply: `You don't have access to the debug commands!`
@@ -200,19 +214,40 @@ module.exports = {
 	}),
 	Dynamic_Description: (async (prefix, values) => {
 		const { threshold, limit } = values.getStaticData();
+		const channels = await sb.Query.getRecordset(rs => rs
+			.select("Channel.ID AS Channel_ID", "Name")
+			.from("chat_data", "Channel_Chat_Module")
+			.where("Chat_Module = %n", 20)
+			.where("Channel.Platform = %n", 1)
+			.join({
+				toTable: "Channel",
+				on: "Channel_Chat_Module.Channel = Channel.ID"
+			})
+		);
+
+		const channelList = channels.map(i => (
+			`<li><a href="//twitch.tv/${i.Name}">${i.Name}</a> -- <a href="/data/other/markov/${i.Channel_ID}/words">List of words</a>`
+		)).join("");
+
 		return [
 			`Uses a <a href="//en.wikipedia.org/wiki/Markov_model">Markov model</a> to generate "real-looking" sentences based on Twitch chat.`,
-			`Currently only supports <a href="//twitch.tv/forsen">Forsen's channel</a>.`,
+			"Multiple channels can be supported, the command currently uses @Forsen's channel by default if no channel is provided.",
 			`The model is not available until ${threshold} unique words have been added to it!`,
-			`The list of currently available words is here (only updated once a minute!): <a href="/data/other/markov/words">Markov word list</a>`,
+			"",
 
 			`<code>${prefix}markov</code>`,
 			"Generates 15 words, with the first one being chosen randomly.",
 			"",
 
+			`<code>${prefix}markov channel:(channel)</code>`,
+			"Generates words in the specified channel's context.",
+			`List of currently supported channels: <ul>${channelList}</ul>`,
+
 			`<code>${prefix}markov (word)</code>`,
-			`Generates 15 words, with your chosen word being the "seed" - the first word in the sequence.`,
+			`Generates words, with your chosen word being the "seed", which is the first word in the sequence.`,
+			"Only one word will be taken into account, because this is how the implementation works.",
 			"If your word isn't matched exactly, other, case-insensitive variants will be attempted.",
+			"Like, if <code>4HEad</code> isn't in the word list, <code>4Head</code> will be used instead.",
 			"",
 
 			`<code>${prefix}markov words:(number)</code>`,
@@ -220,7 +255,7 @@ module.exports = {
 			"",
 
 			`<code>${prefix}markov exact:true</code>`,
-			"If you want your seed word to be specific, use <code>exact:true to force to use just that case-sensitive version."
+			"If you want your seed word to be specific, use <code>exact:true</code> to force to use just that case-sensitive version."
 		];
 	})
 };

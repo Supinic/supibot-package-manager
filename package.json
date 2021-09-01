@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "mocha ./tests --recursive --exit",
+    "test": "mocha \"./@(chat-modules|commands|crons)/**/*.test.js\" ./tests/**/*.test.js  --exit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

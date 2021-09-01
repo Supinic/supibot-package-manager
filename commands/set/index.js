@@ -8,16 +8,10 @@ module.exports = {
 	Params: null,
 	Whitelist_Response: null,
 	Static_Data: (() => {
-		const birthdayRegex = /(\d+)[.\-/\s]+(\w{3})/i;
-		const birthdayFormatter = new Intl.DateTimeFormat("en-us", {
-			day: "numeric",
-			month: "long"
-		});
-	
 		const timersLimit = 5;
 		const timerNameRegex = /^[-\w\u00a9\u00ae\u2000-\u3300\ud83c\ud000-\udfff\ud83d\ud000-\udfff\ud83e\ud000-\udfff]{2,25}$/;
-	
-		const availableFlags = ["anime", "animal", "disfigured", "disturbing", "drawn", "furry", "gore", "hentai", "human", "language", "none", "porn", "scat", "softcore"];
+
+		const availableFlags = ["anime", "animal", "body-fluids", "disfigured", "disturbing", "drawn", "furry", "gore", "hentai", "human", "language", "none", "porn", "scat", "softcore"];
 		const handleAmbassadors = async (type, context, ...args) => {
 			const [user, channel = context.channel?.Name] = args;
 			if (!user || !channel) {
@@ -26,7 +20,7 @@ module.exports = {
 					reply: `Must provide a proper user and channel!`
 				};
 			}
-	
+
 			const userData = await sb.User.get(user);
 			const channelData = sb.Channel.get(channel, context.platform);
 			if (!userData || !channelData) {
@@ -41,7 +35,7 @@ module.exports = {
 					reply: "Channel owners can't be set as their own channel's ambassadors!"
 				};
 			}
-	
+
 			const isAmbassador = channelData.isUserAmbassador(userData);
 			if ((type === "set" && isAmbassador) || (type === "unset" && !isAmbassador)) {
 				const prefix = (type === "set") ? "already" : "not";
@@ -50,9 +44,9 @@ module.exports = {
 					reply: `Cannot ${context.invocation} ${userData.Name} as an ambassador in ${channelData.Name}, because they are ${prefix} one!`
 				};
 			}
-	
+
 			await channelData.toggleAmbassador(userData);
-	
+
 			if (type === "set") {
 				const message = sb.Utils.tag.trim `
 					You are now a Supibot Ambassador in the channel ${channelData.Name}!
@@ -60,7 +54,7 @@ module.exports = {
 					You should also notify @Supinic whenever there's an issue, or something needs to be fixed or done regarding the bot.
 					Have fun and stay responsible 🙂
 				`;
-	
+
 				try {
 					await context.platform.pm(message, userData.Name);
 				}
@@ -79,7 +73,7 @@ module.exports = {
 					}, true);
 				}
 			}
-	
+
 			const string = (type === "set") ? "now" : "no longer";
 			return {
 				reply: `${userData.Name} is ${string} a Supibot Ambassador in #${channelData.Name}.`
@@ -160,7 +154,7 @@ module.exports = {
 								reply: "ID does not exist!"
 							};
 						}
-	
+
 						if (row.values.User_From !== context.user.ID && row.values.User_To !== context.user.ID) {
 							return {
 								success: false,
@@ -182,13 +176,13 @@ module.exports = {
 						else {
 							const reminder = sb.Reminder.get(ID);
 							if (reminder) {
-								await reminder.deactivate(true);
+								await reminder.deactivate(true, true);
 							}
 							else {
 								row.values.Active = false;
 								await row.save();
 							}
-	
+
 							return {
 								reply: `Reminder ID ${ID} unset successfully.`
 							};
@@ -221,7 +215,7 @@ module.exports = {
 						catch {
 							return { reply: "ID does not exist!" };
 						}
-	
+
 						if (row.values.User_Alias !== context.user.ID) {
 							return {
 								success: false,
@@ -245,7 +239,7 @@ module.exports = {
 							}
 
 							await row.save();
-	
+
 							return {
 								reply: `Suggestion ID ${ID} has been set as "${row.values.Status}".`
 							};
@@ -274,7 +268,7 @@ module.exports = {
 							hidden = false;
 							visibilityType = args.shift();
 						}
-	
+
 						if (args.length === 0) {
 							const { location } = context.user.Data;
 							if (location && visibilityType !== null) {
@@ -300,20 +294,20 @@ module.exports = {
 								};
 							}
 						}
-	
+
 						const query = args.join(" ");
 						const { components, coordinates, formatted, location, placeID, success } = await sb.Utils.fetchGeoLocationData(
 							sb.Config.get("API_GOOGLE_GEOCODING"),
 							query
 						);
-	
+
 						if (!success) {
 							return {
 								success: false,
 								reply: "No location found for given query!"
 							};
 						}
-	
+
 						context.user.Data.location = {
 							formatted,
 							placeID,
@@ -322,7 +316,7 @@ module.exports = {
 							coordinates: coordinates ?? location,
 							original: query
 						};
-	
+
 						await context.user.saveProperty("Data", context.user.Data);
 						return {
 							reply: `Successfully set your ${hidden ? "private" : "public"} location!`
@@ -335,9 +329,9 @@ module.exports = {
 								reply: `You don't have a location set up, so there is nothing to unset!`
 							};
 						}
-	
+
 						context.user.Data.location = null;
-	
+
 						await context.user.saveProperty("Data", context.user.Data);
 						return {
 							reply: "Your location has been unset successfully!"
@@ -360,21 +354,21 @@ module.exports = {
 								reply: "ID does not exist!"
 							};
 						}
-	
+
 						if (!context.user.Data.administrator && row.values.Added_By !== context.user.ID) {
 							return {
 								success: false,
 								reply: "This track was not added by you!"
 							};
 						}
-	
+
 						const tags = await sb.Query.getRecordset(rs => rs
 							.select("Tag")
 							.from("music", "Track_Tag")
 							.where("Track = %n", ID)
 							.flat("Tag")
 						);
-	
+
 						// If gachi tag is present already, there is no reason to unset it.
 						if (tags.includes(6)) {
 							return {
@@ -382,10 +376,10 @@ module.exports = {
 								reply: "This track has already been categorized, and cannot be changed like this!"
 							};
 						}
-	
+
 						// Deletes TODO tag of given track.
 						await sb.Query.raw(`DELETE FROM music.Track_Tag WHERE (Track = ${ID} AND Tag = 20)`);
-	
+
 						return {
 							reply: `Track ID ${ID} (${row.values.Name}) has been stripped of the TODO tag.`
 						};
@@ -400,7 +394,7 @@ module.exports = {
 					set: async (context, ...args) => {
 						context.channel.Data.discord = args.join(" ");
 						await context.channel.saveProperty("Data");
-	
+
 						return {
 							reply: `Discord description set successfully.`
 						};
@@ -408,7 +402,7 @@ module.exports = {
 					unset: async (context) => {
 						context.channel.Data.discord = null;
 						await context.channel.saveProperty("Data");
-	
+
 						return {
 							reply: `Discord description unset successfully.`
 						};
@@ -427,13 +421,7 @@ module.exports = {
 								reply: "No date provided!"
 							};
 						}
-						else if (!birthdayRegex.test(query)) {
-							return {
-								success: false,
-								reply: `The date you provided must be in form "day-month", where month is specified by 3 characters, e.g. "Jan" or "Aug"`
-							};
-						}
-	
+
 						const date = new sb.Date(query);
 						if (!date.valueOf()) {
 							return {
@@ -441,14 +429,15 @@ module.exports = {
 								reply: "Date could not be parsed :("
 							};
 						}
-	
+
 						context.user.Data.birthday = {
 							month: date.month,
 							day: date.day,
-							string: birthdayFormatter.format(date)
+							string: date.format("F dS")
 						};
+
 						await context.user.saveProperty("Data", context.user.Data);
-	
+
 						return {
 							reply: `Successfully set your birthday to ${context.user.Data.birthday.string}.`
 						};
@@ -460,10 +449,10 @@ module.exports = {
 								reply: `You don't have a birthday date set up, so there is nothing to unset!`
 							};
 						}
-	
+
 						context.user.Data.birthday = null;
 						await context.user.saveProperty("Data", context.user.Data);
-	
+
 						return {
 							reply: "Your birthday date has been unset successfully!"
 						};
@@ -487,11 +476,11 @@ module.exports = {
 								reply: `No link provided!`
 							};
 						}
-	
+
 						if (link.toLowerCase() === "last") {
 							const tl = sb.Command.get("tl");
 							const key = tl.staticData.createRecentUseCacheKey(context);
-	
+
 							const cacheData = await tl.getCacheData(key);
 							if (!cacheData) {
 								return {
@@ -503,7 +492,7 @@ module.exports = {
 								link = cacheData;
 							}
 						}
-	
+
 						flags = flags.filter(i => availableFlags.includes(i.toLowerCase()));
 						if (flags.length === 0) {
 							return {
@@ -511,7 +500,7 @@ module.exports = {
 								reply: `No suitable flags provided! Here's the list: ${availableFlags.join(", ")}`
 							};
 						}
-	
+
 						const regex = /(https:\/\/)?(www\.)?(imgur\.com\/)?([\d\w]{5,8}\.\w{3})/;
 						const match = link.match(regex);
 						if (!match) {
@@ -520,28 +509,45 @@ module.exports = {
 								reply: `Invalid link format!`
 							};
 						}
-	
+
 						const exists = await sb.Query.getRecordset(rs => rs
-							.select("Link")
+							.select("Link", "Adult_Flags")
 							.from("data", "Twitch_Lotto")
 							.where("Link = %s", match[4])
 							.limit(1)
 							.single()
-							.flat("Link")
 						);
-						if (!exists) {
+						if (!exists || !exists.Link) {
 							return {
 								success: false,
 								reply: `Link does not exist in the TwitchLotto database!`
 							};
 						}
-	
+
+						if (exists.Adult_Flags === null) {
+							const channels = await sb.Query.getRecordset(rs => rs
+								.select("Channel")
+								.from("data", "Twitch_Lotto")
+								.where("Link = %s", exists.Link)
+								.flat("Channel")
+							);
+
+							for (const channel of channels) {
+								const row = await sb.Query.getRow("data", "Twitch_Lotto_Channel");
+								await row.load(channel);
+								if (row.values.Scored !== null) {
+									row.values.Scored += 1;
+									await row.save({ skipLoad: true });
+								}
+							}
+						}
+
 						await sb.Query.getRecordUpdater(ru => ru
 							.update("data", "Twitch_Lotto")
 							.set("Adult_Flags", flags.sort())
 							.where("Link = %s", match[4])
 						);
-	
+
 						return {
 							reply: `Link ${link} successfully updated with flags ${flags.sort().join(", ")}.`
 						};
@@ -559,7 +565,7 @@ module.exports = {
 								reply: "You cannot use the command here!"
 							};
 						}
-	
+
 						// const flagger = Boolean(context.user.Data.trustedTwitchLottoFlagger); // skipped for now
 						const ambassador = context.channel.isUserAmbassador(context.user);
 						const owner = await context.channel.isUserChannelOwner(context.user);
@@ -575,7 +581,7 @@ module.exports = {
 								reply: `If you want to remove all flags, use $unset instead!`
 							};
 						}
-	
+
 						const suitableFlags = flags.filter(i => availableFlags.includes(i.toLowerCase()));
 						if (suitableFlags.length === 0) {
 							return {
@@ -583,10 +589,10 @@ module.exports = {
 								reply: `No suitable flags provided! Here's the list: ${availableFlags.join(", ")}`
 							};
 						}
-	
+
 						context.channel.Data.twitchLottoBlacklistedFlags = suitableFlags.map(i => i.toLowerCase());
 						await context.channel.saveProperty("Data");
-	
+
 						return {
 							reply: `Blacklisted flags successfully updated for this channel.`
 						};
@@ -598,7 +604,7 @@ module.exports = {
 								reply: "You cannot use the command here!"
 							};
 						}
-	
+
 						// const flagger = Boolean(context.user.Data.trustedTwitchLottoFlagger); // skipped for now
 						const ambassador = context.channel.isUserAmbassador(context.user);
 						const owner = await context.channel.isUserChannelOwner(context.user);
@@ -608,10 +614,10 @@ module.exports = {
 								reply: `You cannot do that here!`
 							};
 						}
-	
+
 						context.channel.Data.twitchLottoBlacklistedFlags = [];
 						await context.channel.saveProperty("Data");
-	
+
 						return {
 							reply: `Blacklisted flags successfully removed.`
 						};
@@ -634,7 +640,7 @@ module.exports = {
 						if (!context.user.Data.timers) {
 							context.user.Data.timers = {};
 						}
-	
+
 						const { timers } = context.user.Data;
 						const name = args[0];
 						const date = new sb.Date(args.slice(1, 2).filter(Boolean).join(" "));
@@ -644,30 +650,30 @@ module.exports = {
 								reply: `Your timer name is not valid! Your timer name should only contain letters, numbers and be 2-25 characters long.`
 							};
 						}
-	
+
 						let timersCount = Object.keys(timers).length;
 						if (!timers[name]) {
 							timersCount += 1;
 						}
-	
+
 						if (timersCount > timersLimit) {
 							return {
 								success: false,
 								reply: `You have too many timers set up! Unset one first.`
 							};
 						}
-	
+
 						if (Number.isNaN(date.valueOf())) {
 							return {
 								success: false,
 								reply: `Invalid date and/or time!`
 							};
 						}
-	
+
 						timers[name] = {
 							date: date.valueOf()
 						};
-	
+
 						await context.user.saveProperty("Data");
 						return {
 							reply: `Successfully added your timer "${name}".`
@@ -687,7 +693,7 @@ module.exports = {
 								reply: `You don't have this timer set up!`
 							};
 						}
-	
+
 						delete timers[name];
 						await context.user.saveProperty("Data");
 						return {
@@ -705,10 +711,10 @@ module.exports = {
 				reply: "No type provided!"
 			};
 		}
-	
+
 		const { invocation } = context;
 		type = type.toLowerCase();
-	
+
 		const target = this.staticData.variables.find(i => type === i.name || i.aliases.includes(type));
 		if (!target) {
 			return {
@@ -722,7 +728,7 @@ module.exports = {
 				reply: `You cannot ${invocation} the type ${type}!`
 			};
 		}
-	
+
 		if (target.adminOnly && !context.user.Data.administrator) {
 			return {
 				success: false,
@@ -739,7 +745,7 @@ module.exports = {
 				reply: `Only channel owners and ambassadors can work with the type "${type}"!`
 			};
 		}
-	
+
 		if (target.parameter === "arguments") {
 			return await target[invocation](context, ...args);
 		}
@@ -750,7 +756,7 @@ module.exports = {
 					reply: "At least one item must be provided!"
 				};
 			}
-	
+
 			let IDs = args.map(i => Number(i)).filter(Boolean);
 			if (args[0] === "last") {
 				if (typeof target.getLastID !== "function") {
@@ -759,7 +765,7 @@ module.exports = {
 						reply: `You cannot use the keyword "last" while ${invocation}ting a ${type}!`
 					};
 				}
-	
+
 				const lastID = await target.getLastID(context);
 				if (typeof lastID !== "number") {
 					return {
@@ -767,17 +773,17 @@ module.exports = {
 						reply: `You don't have any active ${type}s to be ${invocation}!`
 					};
 				}
-	
+
 				IDs = [lastID];
 			}
-	
+
 			if (IDs.length > 1 && invocation === "set") {
 				return {
 					success: false,
 					reply: "Cannot set more than one item at a time!"
 				};
 			}
-	
+
 			const results = [];
 			for (const ID of IDs) {
 				if (!sb.Utils.isValidInteger(ID)) {
@@ -786,14 +792,14 @@ module.exports = {
 						success: false,
 						reply: `Provided ID is not a valid number!`
 					});
-	
+
 					continue;
 				}
-	
+
 				const subResult = await target[invocation](context, ID);
 				results.push({ ID, ...subResult });
 			}
-	
+
 			if (results.length === 0) {
 				return await target[invocation](context);
 			}
@@ -811,7 +817,7 @@ module.exports = {
 				const failString = (fail.length > 0)
 					? `Fail: ${invocation}ting IDs ${fail.map(i => i.ID).join(", ")}.`
 					: "";
-	
+
 				return {
 					reply: [successString, failString].filter(Boolean).join(" ")
 				};
@@ -825,23 +831,23 @@ module.exports = {
 			if (i.aliases.length > 0) {
 				names += `(${i.aliases.join(", ")})`;
 			}
-	
+
 			const types = [
 				(i.set) ? "set" : "",
 				(i.unset) ? "unset" : ""
 			].filter(Boolean).join("/");
-			
+
 			return `<li><code>${names}</code> (${types}) ${i.description}</li>`;
 		}).join("");
-	
+
 		return [
 			"Sets a variable that you can then use in Supibot's commands.",
 			"",
-	
+
 			`<code>${prefix}set (variable) (data)</code>`,
 			`Sets the variable of the given type with given data.`,
 			"",
-			
+
 			"List of variables:",
 			`<ul>${list}</ul>`
 		];

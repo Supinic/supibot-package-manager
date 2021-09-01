@@ -4,7 +4,7 @@ module.exports = {
 	Author: "supinic",
 	Cooldown: 10000,
 	Description: "Fetches the current time and timezone for a given location, or a user, if they have set their location.",
-	Flags: ["mention","non-nullable","pipe"],
+	Flags: ["block","mention","non-nullable","opt-out","pipe"],
 	Params: null,
 	Whitelist_Response: null,
 	Static_Data: (() => ({
@@ -59,12 +59,11 @@ module.exports = {
 		let place = args.join(" ");
 
 		if (args.length === 0) {
-			const location = await context.user.getDataProperty("location");
-			if (location) {
+			if (context.user.Data.location) {
 				user = context.user;
-				coordinates = location.coordinates;
-				skipLocation = location.hidden;
-				place = location.formatted;
+				coordinates = context.user.Data.location.coordinates;
+				skipLocation = context.user.Data.location.hidden;
+				place = context.user.Data.location.formatted;
 			}
 			else {
 				return {
@@ -89,20 +88,22 @@ module.exports = {
 					reply: `My current time is ${sb.Date.now()} ${robotEmote}`
 				};
 			}
+			else if (!targetUser.Data.location) {
+				const message = (targetUser === context.user)
+					? "You have not set up your location! You can use $set location (location) to set it, or add \"private\" to make it private 🙂"
+					: "They have not set up their location!";
 
-			const location = await targetUser.getDataProperty("location");
-			if (!location) {
 				return {
 					success: false,
-					reply: "That user has not set their location!",
+					reply: message,
 					cooldown: 2500
 				};
 			}
 			else {
 				user = targetUser;
-				coordinates = location.coordinates;
-				skipLocation = location.hidden;
-				place = location.formatted;
+				coordinates = targetUser.Data.location.coordinates;
+				skipLocation = targetUser.Data.location.hidden;
+				place = targetUser.Data.location.formatted;
 			}
 		}
 

@@ -34,7 +34,7 @@ module.exports = {
 							reply: `No argument limit provided!`
 						};
 					}
-					
+
 					const range = limit.split("..").map(i => i === "" ? null : Number(i));
 					if (range.length === 0) { // ".." - interpreted as "any"
 						return {
@@ -82,11 +82,34 @@ module.exports = {
 				}
 			},
 			{
+				name: "bestavailableemote",
+				aliases: ["bae"],
+				description: "For a list of emotes, uses the first one that is actually available in the channel. The last one should be a \"fallback\", so it should be available anywhere.",
+				examples: [
+					["channel with just LULW: $abb bae PepeLaugh pepeLaugh LULW LULE 4Head", "LULW"],
+					["channel with no emotes: $abb bae PepeLaugh pepeLaugh LULW LULE 4Head", "4Head"]
+				],
+				execute: async (context, ...args) => {
+					if (args.length < 2) {
+						return {
+							success: false,
+							reply: `At least two emotes must be provided - one to check, one to fall back on!`
+						};
+					}
+
+					const bestMatch = await context.getBestAvailableEmote(args.slice(0, -1), args[args.length - 1]);
+					return {
+						reply: bestMatch
+					};
+				}
+			},
+			{
 				name: "chatter",
 				aliases: [],
-				description: "Selects a random chatter within the channel, and outputs their name. Not applicable in PMs.",
+				description: "Selects a random chatter within the channel, and outputs their name. Not applicable in PMs. Use the \"excludeSelf:true\" parameter to exclude yourself from the random chatter roll",
 				examples: [
-					["$abb chatter", "supinic"]
+					["$abb chatter", "(user))"],
+					["$abb chatter excludeSelf:true", "(someone who is not you)"]
 				],
 				execute: async (context) => {
 					if (context.privateMessage) {

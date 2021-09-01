@@ -9,14 +9,30 @@ module.exports = {
 	Whitelist_Response: null,
 	Static_Data: null,
 	Code: (async function streamInfo (context, ...args) {
-		const target = (args.length === 0)
-			? context.channel.Name
-			: args[0];
+		let targetChannel;
+		if (args.length === 0) {
+			if (context.platform.Name !== "twitch") {
+				return {
+					success: false,
+					reply: `No Twitch channel provided!`
+				};
+			}
+			else if (context.privateMessage) {
+				return {
+					success: false,
+					reply: `No channel provided!`
+				};
+			}
+
+			targetChannel = context.channel.Name;
+		}
+		else {
+			targetChannel = args[0];
+		}
 
 		const { controller } = sb.Platform.get("twitch");
-		const targetData = await sb.User.get(target);
-		const channelID = targetData?.Twitch_ID ?? await controller.getUserID(target);
-
+		const targetData = await sb.User.get(targetChannel);
+		const channelID = targetData?.Twitch_ID ?? await controller.getUserID(targetChannel);
 		if (!channelID) {
 			return {
 				success: false,
@@ -24,46 +40,59 @@ module.exports = {
 			};
 		}
 
-		const data = await sb.Got("Kraken", `streams/${channelID}`).json();
-		if (data === null || data.stream === null) {
-			const { data } = await sb.Got("Helix", {
-				url: "videos",
-				searchParams: {
-					user_id: channelID
-				}
-			}).json();
+		const streamResponse = await sb.Got("Helix", {
+			url: "streams",
+			searchParams: {
+				user_id: channelID
+			}
+		});
 
-			if (data.length === 0) {
+		const [stream] = streamResponse.body.data;
+		if (!stream) {
+			const broadcasterData = await sb.Got("Leppunen", {
+				url: `v2/twitch/user/${channelID}`,
+				searchParams: {
+					id: "true"
+				}
+			});
+
+			if (broadcasterData.statusCode !== 200) {
 				return {
-					reply: `Channel is offline.`
+					reply: `Channel is offline - no more data currently available. Try again later`
 				};
 			}
 
-			let mult = 1000;
-			const { created_at: created, duration } = data[0];
-			const vodDuration = duration.split(/\D/).filter(Boolean).map(Number)
-				.reverse()
-				.reduce((acc, cur) => {
-					acc += cur * mult;
-					mult *= 60;
-					return acc;
-				}, 0);
+			const { banned, lastBroadcast } = broadcasterData.body;
+			const status = (banned) ? "banned" : "offline";
+			if (lastBroadcast.startedAt === null) {
+				return {
+					reply: `Channel is ${status} - never streamed before.`
+				};
+			}
 
-			const delta = sb.Utils.timeDelta(new sb.Date(created).valueOf() + vodDuration, true);
+			const start = new sb.Date(lastBroadcast.startedAt);
+			const title = lastBroadcast.title ?? "(no title)";
+			const delta = sb.Utils.timeDelta(start);
+
 			return {
-				reply: `Channel has been offline for ${delta}.`
+				reply: `Channel is ${status} - last streamed ${delta}, title: ${title}`
 			};
 		}
 
-		const stream = data.stream;
-		const started = sb.Utils.timeDelta(new sb.Date(stream.created_at));
-		const viewersSuffix = (stream.viewers === 1) ? "" : "s";
-		const broadcast = (stream.game)
-			? `playing ${stream.game}`
+		const started = sb.Utils.timeDelta(new sb.Date(stream.started_at));
+		const viewersSuffix = (stream.viewer_count === 1) ? "" : "s";
+		const broadcast = (stream.game_name)
+			? `playing ${stream.game_name}`
 			: `streaming under no category`;
 
 		return {
-			reply: `${target} is ${broadcast}, since ${started} for ${stream.viewers} viewer${viewersSuffix} at ${stream.video_height}p. Title: ${stream.channel.status} https://twitch.tv/${target.toLowerCase()}`
+			reply: sb.Utils.tag.trim `
+				${targetChannel} is ${broadcast}, 
+				since ${started} 
+				for ${sb.Utils.groupDigits(stream.viewer_count)} viewer${viewersSuffix}.
+				Title: ${stream.title} 
+				https://twitch.tv/${targetChannel.toLowerCase()}
+			`
 		};
 	}),
 	Dynamic_Description: null

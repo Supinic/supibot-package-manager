@@ -1,4 +1,3 @@
-/* global describe, it */
 /* eslint-disable max-nested-callbacks */
 const fs = require("fs");
 const acorn = require("acorn-node");
@@ -48,7 +47,7 @@ describe("global module suite", () => {
 						let model = null;
 						try {
 							model = acorn.parse(content, {
-								ecmaVersion: 2020,
+								ecmaVersion: 2022,
 								sourceType: "module"
 							});
 						}

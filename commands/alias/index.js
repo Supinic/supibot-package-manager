@@ -122,7 +122,7 @@ module.exports = {
 					.from("data", "Custom_Command_Alias")
 					.where("Channel IS NULL")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", name)
+					.where("Name COLLATE utf8mb4_bin = %s", name)
 					.single()
 					.limit(1)
 				);
@@ -249,19 +249,40 @@ module.exports = {
 					prefix = (context.user === user) ? "Your" : "Their";
 				}
 
-				const alias = await sb.Query.getRecordset(rs => rs
-					.select("Invocation", "Arguments")
+				let alias = await sb.Query.getRecordset(rs => rs
+					.select("Command", "Invocation", "Arguments", "Parent")
 					.from("data", "Custom_Command_Alias")
-					.where("Name = %s", aliasName)
+					.where("User_Alias = %n", user.ID)
+					.where("Name COLLATE utf8mb4_bin = %s", aliasName)
 					.limit(1)
 					.single()
 				);
 
+				let appendix = "";
 				if (!alias) {
 					const who = (context.user === user) ? "You" : "They";
 					return {
 						success: false,
 						reply: `${who} don't have the "${aliasName}" alias!`
+					};
+				}
+				else if (alias.Command === null && alias.Parent !== null) {
+					// special case for linked aliases
+					alias = await sb.Query.getRecordset(rs => rs
+						.select("User_Alias", "Name", "Command", "Invocation", "Arguments", "Parent")
+						.from("data", "Custom_Command_Alias")
+						.where("User_Alias = %n", user.ID)
+						.where("Name COLLATE utf8mb4_bin = %s", aliasName)
+						.limit(1)
+						.single()
+					);
+
+					const originalUser = await sb.User.get(alias.User_Alias);
+					appendix = `This alias is a link to "${alias.Name}" made by ${originalUser.Name}.`;
+				}
+				else if (alias.Command === null && alias.Parent === null) {
+					return {
+						reply: `${prefix} alias is a link to a different alias, but the original has been deleted.`
 					};
 				}
 
@@ -271,7 +292,7 @@ module.exports = {
 					message = `${alias.Invocation} ${aliasArgs.join(" ")}`;
 				}
 				else {
-					message = `${prefix} alias "${aliasName}" has this definition: ${alias.Invocation} ${aliasArgs.join(" ")}`;
+					message = `${appendix} ${prefix} alias "${aliasName}" has this definition: ${alias.Invocation} ${aliasArgs.join(" ")}`;
 				}
 
 				const limit = context.channel?.Message_Limit ?? context.platform.Message_Limit;
@@ -313,6 +334,12 @@ module.exports = {
 						reply: "No target alias provided!"
 					};
 				}
+				else if (!this.staticData.nameCheck.regex.test(targetAliasName)) {
+					return {
+						success: false,
+						reply: "The copied alias's name is not valid and therefore can't be copied!"
+					};
+				}
 
 				const targetUser = await sb.User.get(targetUserName);
 				if (!targetUser) {
@@ -323,11 +350,11 @@ module.exports = {
 				}
 
 				const targetAlias = await sb.Query.getRecordset(rs => rs
-					.select("ID", "Command", "Invocation", "Arguments")
+					.select("ID", "Command", "Invocation", "Arguments", "Parent")
 					.from("data", "Custom_Command_Alias")
 					.where("Channel IS NULL")
 					.where("User_Alias = %n", targetUser.ID)
-					.where("Name = %s", targetAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", targetAliasName)
 					.limit(1)
 					.single()
 				);
@@ -338,13 +365,19 @@ module.exports = {
 						reply: `They don't have the "${targetAliasName}" alias!`
 					};
 				}
+				else if (targetAlias.Command === null) {
+					return {
+						success: false,
+						reply: `You cannot copy links to other aliases!`
+					};
+				}
 
 				const currentAlias = await sb.Query.getRecordset(rs => rs
 					.select("ID", "Command", "Invocation", "Arguments")
 					.from("data", "Custom_Command_Alias")
 					.where("Channel IS NULL")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", targetAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", targetAliasName)
 					.limit(1)
 					.single()
 				);
@@ -395,7 +428,7 @@ module.exports = {
 					.select("ID")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", name)
+					.where("Name COLLATE utf8mb4_bin = %s", name)
 					.limit(1)
 					.single()
 				);
@@ -434,12 +467,18 @@ module.exports = {
 						reply: `To duplicate an alias, you must provide both existing and new alias names!`
 					};
 				}
+				else if (!this.staticData.nameCheck.regex.test(newAliasName)) {
+					return {
+						success: false,
+						reply: `Your alias name is not valid! ${this.staticData.nameCheck.response}`
+					};
+				}
 
 				const oldAlias = await sb.Query.getRecordset(rs => rs
-					.select("ID", "Command", "Invocation", "Arguments", "Description")
+					.select("ID", "Command", "Invocation", "Arguments", "Description", "Parent")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", oldAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", oldAliasName)
 					.limit(1)
 					.single()
 				);
@@ -449,12 +488,18 @@ module.exports = {
 						reply: `You don't have the "${oldAliasName}" alias!`
 					};
 				}
+				else if (oldAlias.Command === null) {
+					return {
+						success: false,
+						reply: `You cannot duplicate links to other aliases!`
+					};
+				}
 
 				const newAlias = await sb.Query.getRecordset(rs => rs
 					.select("Command", "Invocation", "Arguments", "Description")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", newAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", newAliasName)
 					.limit(1)
 					.single()
 				);
@@ -503,10 +548,10 @@ module.exports = {
 				}
 
 				const alias = await sb.Query.getRecordset(rs => rs
-					.select("ID")
+					.select("ID", "Command", "Parent")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", name)
+					.where("Name COLLATE utf8mb4_bin = %s", name)
 					.limit(1)
 					.single()
 				);
@@ -514,6 +559,12 @@ module.exports = {
 					return {
 						success: false,
 						reply: `You don't have the "${name}" alias!`
+					};
+				}
+				else if (alias.Command === null) {
+					return {
+						success: false,
+						reply: `You cannot edit links to other aliases!`
 					};
 				}
 
@@ -565,7 +616,7 @@ module.exports = {
 					.select("Description")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", user.ID)
-					.where("Name = %s", aliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", aliasName)
 					.limit(1)
 					.single()
 				);
@@ -585,6 +636,106 @@ module.exports = {
 				};
 			}
 
+			case "link": {
+				const [userName, aliasName] = args;
+				if (!userName || !aliasName) {
+					return {
+						success: false,
+						reply: `You didn't provide a user, or the alias name! Use: alias link (user) (alias name)`
+					};
+				}
+
+				const existing = await sb.Query.getRecordset(rs => rs
+					.select("ID")
+					.from("data", "Custom_Command_Alias")
+					.where("Channel IS NULL")
+					.where("User_Alias = %n", context.user.ID)
+					.where("Name COLLATE utf8mb4_bin = %s", aliasName)
+					.single()
+					.flat("ID")
+					.limit(1)
+				);
+				if (existing) {
+					return {
+						success: false,
+						reply: `Cannot link a new alias - you already have an alias with this name!`
+					};
+				}
+
+				const userData = await sb.User.get(userName);
+				if (!userData) {
+					return {
+						success: false,
+						reply: `Provided user does not exist!`
+					};
+				}
+
+				let targetAlias = await sb.Query.getRecordset(rs => rs
+					.select("ID", "Name", "Description", "Command", "Parent")
+					.from("data", "Custom_Command_Alias")
+					.where("Channel IS NULL")
+					.where("User_Alias = %n", userData.ID)
+					.where("Name COLLATE utf8mb4_bin = %s", aliasName)
+					.single()
+					.limit(1)
+				);
+
+				let appendix = "";
+
+				if (!targetAlias) {
+					return {
+						success: false,
+						reply: `Provided user does not have the "${aliasName}" alias!`
+					};
+				}
+				else if (targetAlias.Command === null && targetAlias.Parent !== null) {
+					// If attempting to link an already linked alias, change the pointer to the original alias
+					targetAlias = await sb.Query.getRecordset(rs => rs
+						.select("ID", "User_Alias", "Name", "Description", "Command", "Parent")
+						.from("data", "Custom_Command_Alias")
+						.where("ID = %n", targetAlias.Parent)
+						.single()
+						.limit(1)
+					);
+
+					const originalUser = await sb.User.get(targetAlias.User_Alias);
+					appendix = `You tried to create a link out of an already linked alias (alias ${targetAlias.Name} by ${originalUser.Name}), so I used the original as your template.`;
+					targetAlias.Name = aliasName;
+				}
+				else if (targetAlias.Command === null && targetAlias.Parent === null) {
+					return {
+						success: false,
+						reply: `Unfortunately, it looks like the original alias has been removed!`
+					};
+				}
+				else if (!this.staticData.nameCheck.regex.test(targetAlias.Name)) {
+					return {
+						success: false,
+						reply: `Linked alias name is not valid! ${this.staticData.nameCheck.response}`
+					};
+				}
+
+				const row = await sb.Query.getRow("data", "Custom_Command_Alias");
+				row.setValues({
+					User_Alias: context.user.ID,
+					Channel: null,
+					Name: targetAlias.Name,
+					Command: null,
+					Invocation: null,
+					Arguments: null,
+					Created: new sb.Date(),
+					Edited: null,
+					Description: targetAlias.Description,
+					Parent: targetAlias.ID
+				});
+
+				await row.save({ skipLoad: true });
+
+				return {
+					reply: `Successfully created the alias link! When the original changes, so will yours. ${appendix}`
+				};
+			}
+
 			case "delete":
 			case "remove": {
 				const [name] = args;
@@ -599,7 +750,7 @@ module.exports = {
 					.select("ID")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", name)
+					.where("Name COLLATE utf8mb4_bin = %s", name)
 					.limit(1)
 					.single()
 				);
@@ -639,7 +790,7 @@ module.exports = {
 					.select("ID")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", oldAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", oldAliasName)
 					.limit(1)
 					.single()
 				);
@@ -654,7 +805,7 @@ module.exports = {
 					.select("ID")
 					.from("data", "Custom_Command_Alias")
 					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", newAliasName)
+					.where("Name COLLATE utf8mb4_bin = %s", newAliasName)
 					.limit(1)
 					.single()
 				);
@@ -675,34 +826,79 @@ module.exports = {
 				};
 			}
 
-			case "run": {
-				const [name] = args;
-				if (!name) {
+			case "run":
+			case "try": {
+				let name;
+				let user;
+
+				const runArgs = [...args];
+				const [firstArg, secondArg] = runArgs;
+				if (!firstArg) {
 					return {
 						success: false,
-						reply: "No alias name provided!"
+						reply: "No input provided!"
 					};
 				}
 
-				const alias = await sb.Query.getRecordset(rs => rs
-					.select("Invocation", "Arguments")
+				if (type === "run") {
+					name = firstArg;
+					user = context.user;
+				}
+				else if (type === "try") {
+					if (!secondArg) {
+						return {
+							success: false,
+							reply: `You didn't provide an alias to try!`
+						};
+					}
+
+					runArgs.splice(0, 1);
+					name = secondArg;
+					user = await sb.User.get(firstArg);
+					if (!user) {
+						return {
+							success: false,
+							reply: `Provided user does not exist!`
+						};
+					}
+				}
+
+				let alias = await sb.Query.getRecordset(rs => rs
+					.select("ID", "Command", "Invocation", "Arguments", "Parent")
 					.from("data", "Custom_Command_Alias")
-					.where("User_Alias = %n", context.user.ID)
-					.where("Name = %s", name)
+					.where("User_Alias = %n", user.ID)
+					.where("Name COLLATE utf8mb4_bin = %s", name)
 					.limit(1)
 					.single()
 				);
+
 				if (!alias) {
+					const who = (user === context.user) ? "You" : "They";
 					return {
 						success: false,
-						reply: `You don't have the "${name}" alias!`
+						reply: `${who} don't have the "${name}" alias!`
+					};
+				}
+				else if (alias.Command === null && alias.Parent !== null) {
+					alias = await sb.Query.getRecordset(rs => rs
+						.select("Command", "Invocation", "Arguments", "Parent")
+						.from("data", "Custom_Command_Alias")
+						.where("ID = %n", alias.Parent)
+						.limit(1)
+						.single()
+					);
+				}
+				else if (alias.Command === null && alias.Parent === null) {
+					return {
+						success: false,
+						reply: `You tried to ${type} a linked alias, but the original has been deleted!`
 					};
 				}
 
-				const invocation = alias.Invocation;
+				let invocation = alias.Invocation;
 				const aliasArguments = (alias.Arguments) ? JSON.parse(alias.Arguments) : [];
 
-				const { success, reply, resultArguments } = this.staticData.applyParameters(context, aliasArguments, args.slice(1));
+				const { success, reply, resultArguments } = this.staticData.applyParameters(context, aliasArguments, runArgs.slice(1));
 				if (!success) {
 					return { success, reply };
 				}
@@ -713,6 +909,23 @@ module.exports = {
 						success: false,
 						reply: `Cannot use the ${invocation} command inside of a pipe, despite being wrapped in an alias!`
 					};
+				}
+
+				// If the invocation is `$alias try (user) (alias)`, and the invoked alias contains another alias
+				// execution, replace the sub-alias from `$alias run` (or `$$`) to `$alias try`, so that the user
+				// who is trying the alias does not need to care about dependencies.
+				const aliasTry = {};
+				if (type === "try") {
+					aliasTry.userName = user.Name;
+
+					if (invocation === "$" && commandData === this) {
+						invocation = "alias";
+						resultArguments.unshift("try", user.Name);
+					}
+					else if (resultArguments[0] === "run" && commandData === this) {
+						resultArguments[0] = "try";
+						resultArguments.splice(1, 0, user.Name);
+					}
 				}
 
 				const aliasCount = (context.append.aliasCount ?? 0) + 1;
@@ -737,6 +950,7 @@ module.exports = {
 						alias: true,
 						aliasCount,
 						aliasStack: [...(context.append.aliasStack ?? []), name],
+						aliasTry,
 						platform: context.platform,
 						skipBanphrases: true,
 						skipMention: true,
@@ -787,11 +1001,23 @@ module.exports = {
 		`<code>${prefix}alias run <u>hello</u></code> => Hallo!`,
 		"",
 
+		`<code>${prefix}alias try (user) (alias) (...arguments)</code>`,
+		"Runs another user's alias, without needing to copy it from them first.",
+		"",
+
 		`<code>${prefix}alias copy (username) (alias)</code>`,
 		`<code>${prefix}alias copyplace (username) (alias)</code>`,
 		"Takes someone else's alias, and attempts to copy it with the same name for you.",
 		"If you use <code>copy</code>, it will only create an alias if you don't already have one with that name.",
 		"If you use <code>copyplace</code>, it will replace whatever alias you have with that name without asking.",
+		"",
+
+		`<code>${prefix}alias link (username) (alias)</code>`,
+		"Takes someone else's alias, and creates a link of it for you, with the same name.",
+		"A link simply executes the user's alias, without you needing to specify it.",
+		"If the original link changes, then so will the execution of your link - as it is the same alias, really.",
+		"If the original is deleted, then your link will become invalid.",
+		"This is recommended to use with reputable alias creators, or if you actually trust someone with their alias and the changes.",
 		"",
 
 		`<code>${prefix}alias check</code>`,
@@ -910,6 +1136,10 @@ module.exports = {
 					<br>
 					<code>${prefix}alias run test</code> => <code>${prefix}remind person hello from (you)!</code>
 				</li>
-			</ul>`
+			</ul>`,
+
+		`For a list of neat small commands usable within aliases to ease up your work, check the <a href="/bot/command/255">${prefix}aliasbuildingblock</a> command.`,
+		"This command lets you build up aliases without needing to create small aliases of your own for menial tasks.",
+		"A good example is <code>$abb say</code>, which simply returns its input - so you don't have to create an alias that does that for you."
 	])
 };

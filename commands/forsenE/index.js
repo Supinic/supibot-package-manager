@@ -40,7 +40,9 @@ module.exports = {
 				"So apparently I’m unbanned! I’ll cu guys tomorrow at 7pm cet. Thats all.",
 				"Happy new years boys and girls. You know 2021 is gonna be EZ clap for the god gamer.",
 				"What do i use the left click for? Oh... farming blocks...",
-				"Ate too many tacos , gonna need 5 ye"
+				"Ate too many tacos , gonna need 5 ye",
+				"HEY! I think you misunderstood me. I was implying all cryptos are scams/mlm schemes.",
+				"Today we finally become a real influencer! Playing some RAID: Shadow Legends on stream later. Download for free on PC and Mobile! #ad"
 			],
 			notes: [
 				`Source for the "b." tweet: https://twitter.com/Forsen/status/1057549668253659136`,
@@ -49,7 +51,9 @@ module.exports = {
 				"Source for the ban tweet: https://twitter.com/Forsen/status/1259936964272422917",
 				"Source for the BSOD unlucky tweet: https://twitter.com/Forsen/status/1325185547220914176",
 				"Source for the left click quote: https://clips.twitch.tv/FilthyCovertEmuCclamChamp",
-				`Source for the "5 ye" tweet: https://twitter.com/Forsen/status/1398683633964158976`
+				`Source for the "5 ye" tweet: https://twitter.com/Forsen/status/1398683633964158976`,
+				"https://twitter.com/Forsen/status/1399336371282644996",
+				"Source for the Shadow Legends tweet: https://twitter.com/Forsen/status/1417528597703708673"
 			]
 		};
 	}),

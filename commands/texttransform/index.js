@@ -197,7 +197,7 @@ module.exports = {
 			{
 				name: "antiping",
 				type: "method",
-				aliases: [],
+				aliases: ["unping"],
 				description: "Every word will have an invisible character added, so that it does not mention users in e.g. Chatterino.",
 				data: (message) => message.split(" ").map(word => {
 					if (/^\w+$/.test(word)) {
@@ -220,7 +220,32 @@ module.exports = {
 				name: "binary",
 				type: "method",
 				aliases: ["bin"],
-				data: (message) => message.split("").map(i => ("0".repeat(8) + i.charCodeAt(0).toString(2)).slice(-8)).join(" ")
+				data: (message) => message.split("").map(i => ("0".repeat(8) + i.charCodeAt(0).toString(2)).slice(-8)).join(" "),
+				reverseData: (message) => {
+					const list = message.split("");
+					let word = "";
+					const result = [];
+
+					for (const char of list) {
+						if (char !== "0" && char !== "1" && !/\s/.test(char)) {
+							return {
+								success: false,
+								reply: `Cannot translate from binary - invalid character encountered!`
+							};
+						}
+
+						if (char === "0" || char === "1") {
+							word += char;
+						}
+
+						if (word.length === 8 || (/\s/.test(char) && word.length !== 0)) {
+							result.push(Number.parseInt(word, 2));
+							word = "";
+						}
+					}
+
+					return String.fromCharCode(...result);
+				}
 			},
 			{
 				name: "morse",
@@ -317,6 +342,14 @@ module.exports = {
 					const output = string.replace(/ⓘ/g, "");
 					return convert.unmap(output, officialCharactersMap);
 				}
+			},
+			{
+				name: "base64",
+				type: "method",
+				aliases: ["b64"],
+				description: "Transforms your input into Base-64 encoding.",
+				data: (string) => Buffer.from(string, "utf8").toString("base64"),
+				reverseData: (string) => Buffer.from(string, "base64").toString("utf8")
 			}
 		];
 		/* eslint-enable quote-props, key-spacing, object-property-newline */
@@ -376,6 +409,9 @@ module.exports = {
 				reply: "No result has been created?!"
 			};
 		}
+		else if (result.success === false) {
+			return result;
+		}
 
 		return {
 			meta: {
@@ -397,11 +433,12 @@ module.exports = {
 				? ""
 				: ` (${transform.aliases.join(", ")})`;
 
+			const reversible = (transform.type === "map" || transform.reverseData) ? "Yes" : "No";
 			return sb.Utils.tag.trim `
 				<li>
 					<code>${transform.name}${aliases}</code>
 					<ul>
-						<li>Reversible: ${transform.type === "map" ? "Yes" : "No"}</li>
+						<li>Reversible: ${reversible}</li>
 						<li>${description}</li>
 						<li>${message}</li>
 					</ul>

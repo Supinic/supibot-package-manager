@@ -7,11 +7,14 @@ module.exports = {
 	Flags: ["mention","pipe","use-params"],
 	Params: [
 		{ name: "_apos", type: "object" },
+		{ name: "_char", type: "string" },
 		{ name: "_force", type: "boolean" },
 		{ name: "_pos", type: "number" }
 	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({
+		// matches | and > characters if and only if they're not preceded, nor followed by another | or >.
+		pipeRegex: /(?<![|>])[|>](?![|>])/,
 		resultCharacterLimit: 50_000,
 		reasons: {
 			block: "That user has blocked you from this command!",
@@ -24,7 +27,27 @@ module.exports = {
 		}
 	})),
 	Code: (async function pipe (context, ...args) {
-		const invocations = args.join(" ").split(/[|>]/).map(i => i.trim());
+		let splitter;
+		if (context.params._char) {
+			splitter = context.params._char;
+		}
+		else {
+			const input = args.join(" ");
+			const alonePipeCount = [...input.matchAll(/\s\|\s/g)].length;
+			const aloneBracketCount = [...input.matchAll(/\s>\s/g)].length;
+
+			if (alonePipeCount === 0 && aloneBracketCount === 0) {
+				splitter = this.staticData.pipeRegex;
+			}
+			else if (aloneBracketCount > alonePipeCount) {
+				splitter = /\s>\s/;
+			}
+			else {
+				splitter = /\s\|\s/;
+			}
+		}
+
+		const invocations = args.join(" ").split(splitter).map(i => i.trim());
 		if (!context.externalPipe && invocations.length < 2) {
 			return {
 				success: false,
@@ -35,22 +58,22 @@ module.exports = {
 		let hasExternalInput = false;
 		const nullCommand = sb.Command.get("null");
 		for (let i = 0; i < invocations.length; i++) {
-			const [commandString] = invocations[i].split(" ");
-			const command = sb.Command.get(commandString);
+			const [commandString, ...cmdArgs] = invocations[i].split(" ");
+			const commandData = sb.Command.get(commandString);
 
-			if (!command) {
+			if (!commandData) {
 				return {
 					success: false,
 					reply: `Command "${commandString}" does not exist!`
 				};
 			}
-			else if (!command.Flags.pipe && invocations[i + 1]) {
+			else if (!commandData.Flags.pipe && invocations[i + 1]) {
 				return {
 					success: false,
 					reply: `Output of command "${commandString}" cannot be piped!`
 				};
 			}
-			else if (nullCommand && command.Flags.nonNullable && invocations[i + 1]) {
+			else if (nullCommand && commandData.Flags.nonNullable && invocations[i + 1]) {
 				const [nextCommandString] = invocations[i + 1].split(" ");
 				const nextCommand = sb.Command.get(nextCommandString.replace(sb.Command.prefixRegex, ""));
 				if (nextCommand && nextCommand.Name === nullCommand.Name) {
@@ -60,12 +83,19 @@ module.exports = {
 					};
 				}
 			}
-			else if (command.Flags.externalInput) {
+			else if (commandData.Flags.externalInput) {
 				hasExternalInput = true;
+			}
+
+			const { aliasTry } = context.append;
+			if (commandData.Name === "alias" && cmdArgs[0] === "run" && aliasTry?.userName) {
+				cmdArgs[0] = "try";
+				cmdArgs.splice(1, 0, aliasTry.userName);
+
+				invocations[i] = [commandString, ...cmdArgs].join(" ");
 			}
 		}
 
-		const resultsInPastebin = args[args.length - 1] === "pastebin";
 		let finalResult = null;
 		let currentArgs = [];
 
@@ -116,6 +146,14 @@ module.exports = {
 			if (!result) { // Banphrase result: Do not reply
 				currentArgs = [];
 			}
+			else if (!result.reply) {
+				if (i < invocations.length - 1) { // Only applies to commands that aren't last in the sequence
+					currentArgs = [];
+				}
+				else { // Short-circuit if the command is the last one in pipe
+					return result;
+				}
+			}
 			else if (typeof result !== "object") { // Banphrase result: Reply with message
 				return {
 					reply: result
@@ -135,7 +173,12 @@ module.exports = {
 			}
 			else if (result.success === false) { // Command result: Failed (cooldown, no command, ...)
 				if (context.params._force) {
-					currentArgs = sb.Utils.wrapString(result.reply, this.staticData.resultCharacterLimit).split(" ");
+					const reply = result.reply ?? "(no reply)";
+					const string = sb.Utils.wrapString(reply, this.staticData.resultCharacterLimit, {
+						keepWhitespace: true
+					});
+
+					currentArgs = string.split(" ");
 				}
 				else {
 					const reply = this.staticData.reasons[result.reason] ?? result.reply ?? result.reason;
@@ -145,17 +188,12 @@ module.exports = {
 					};
 				}
 			}
-			else if (!result.reply) {
-				return {
-					success: false,
-					reply: "Empty pipe result!"
-				};
-			}
-			else if (resultsInPastebin) {
-				currentArgs = result.reply.split(" ");
-			}
 			else {
-				currentArgs = sb.Utils.wrapString(result.reply, this.staticData.resultCharacterLimit).split(" ");
+				const string = sb.Utils.wrapString(result.reply, this.staticData.resultCharacterLimit, {
+					keepWhitespace: true
+				});
+
+				currentArgs = string.split(" ");
 			}
 
 			// lastCommand = sb.Command.get(cmd.replace(sb.Command.prefix, ""));
@@ -183,6 +221,11 @@ module.exports = {
 		"",
 
 		"<h5>Advanced pipe parameters</h5>",
+		"",
+
+		`<code>${prefix}pipe _char:(text) (...)</code>`,
+		`<code>${prefix}pipe _char:<u>FOO</u> rw 10 <u>FOO</u> translate to:de <u>FOO</u> tt fancy</code>`,
+		"When the <code>_char</code> parameter is used, the commands will be separated by a character/text of your choosing",
 		"",
 
 		`<code>${prefix}pipe _apos:(index) (...)</code>`,
