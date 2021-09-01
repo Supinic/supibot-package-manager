@@ -16,7 +16,8 @@ module.exports = {
 		}
 	})),
 	Code: (async function elevate (context, ID) {
-		if (!context.user.Data.github) {
+		const githubData = await context.user.getDataProperty("github");
+		if (!githubData) {
 			return {
 				success: false,
 				reply: "Only users with a linked Github account can use this command! Head to supinic.com - log in, and select Github link in your username dropdown."

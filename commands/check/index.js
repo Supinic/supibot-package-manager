@@ -198,7 +198,8 @@ module.exports = {
 				aliases: [],
 				description: "If you are marked as a developer, you can check the full text of an error within Supibot, based on its ID.",
 				execute: async (context, identifier) => {
-					if (!context.user.Data.inspectErrorStacks) {
+					const inspectErrorStacks = await context.user.getDataProperty("inspectErrorStacks");
+					if (!inspectErrorStacks) {
 						return {
 							reply: "Sorry, you can't inspect error stacks!"
 						};
