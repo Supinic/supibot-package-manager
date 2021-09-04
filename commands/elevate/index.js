@@ -40,14 +40,15 @@ module.exports = {
 
 		const row = await sb.Query.getRow("data", "Suggestion");
 		await row.load(ID, true);
-
 		if (!row.loaded) {
 			return {
 				success: false,
 				reply: "There is no suggestion with that ID!"
 			};
 		}
-		else if (!context.user.Data.administrator && context.user.ID !== row.values.User_Alias) {
+
+		const permissions = await context.user.getUserPermissions();
+		if (!permissions.is("administrator") && context.user.ID !== row.values.User_Alias) {
 			return {
 				success: false,
 				reply: "You are not the author of the suggestion, so you can't elevate it!"
@@ -75,8 +76,9 @@ module.exports = {
 		}
 
 		const creatorUserData = await sb.User.get(row.values.User_Alias);
-		const authorString = (creatorUserData.Data.github?.login)
-			? `@${creatorUserData.Data.github?.login}`
+		const creatorGithubData = await creatorUserData.getDataProperty("github");
+		const authorString = (creatorGithubData?.login)
+			? `@${creatorGithubData.login}`
 			: creatorUserData.Name;
 
 		const issueText = sb.Utils.escapeHTML(row.values.Text);

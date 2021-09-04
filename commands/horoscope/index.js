@@ -72,44 +72,45 @@ module.exports = {
 		]
 	})),
 	Code: (async function horoscope (context) {
-		if (!context.user.Data.birthday) {
+		const birthdayData = await context.user.getDataProperty("birthday");
+		if (!birthdayData) {
 			return {
 				success: false,
-				reply: `You don't have a birthday set up! Use the "${sb.Command.prefix}set birthday" command first.`,
+				reply: `You don't have a birthday set up! Use "${sb.Command.prefix}set birthday (birthday)" command first.`,
 				cooldown: { length: 2500 }
 			};
 		}
-	
+
 		let zodiac = null;
-		const { day, month } = context.user.Data.birthday;
+		const { day, month } = birthdayData;
 		for (const { start, end, name } of this.staticData.zodiac) {
 			if ((month === start[0] && day >= start[1]) || (month === end[0] && day <= end[1])) {
 				zodiac = name;
 				break;
 			}
 		}
-	
+
 		if (zodiac === null) {
 			return {
 				success: false,
 				reply: `No zodiac sign detected...?`
 			};
 		}
-	
+
 		const { statusCode, body: data } = await sb.Got({
 			prefixUrl: "https://horoscope-api.herokuapp.com",
 			url: `horoscope/today/${zodiac}`,
 			throwHttpErrors: false,
 			responseType: "json"
 		});
-		
+
 		if (statusCode !== 200) {
 			throw new sb.errors.APIError({
 				statusCode,
 				apiName: "HoroscopeHerokuAPI"
 			});
 		}
-	
+
 		return {
 			reply: `Your horoscope for today: ${data.horoscope}`
 		};

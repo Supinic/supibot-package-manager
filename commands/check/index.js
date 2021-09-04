@@ -554,7 +554,7 @@ module.exports = {
 				aliases: [],
 				description: "If you have set a timer, this will show its name and date.",
 				execute: async (context, identifier) => {
-					const { timers } = context.user.Data;
+					const timers = await context.user.getDataProperty("timers");
 					if (!timers) {
 						return {
 							success: false,
