@@ -97,22 +97,15 @@ module.exports = {
 			};
 		}
 
-		const { statusCode, body: data } = await sb.Got({
+		const response = await sb.Got("GenericAPI", {
 			prefixUrl: "https://horoscope-api.herokuapp.com",
 			url: `horoscope/today/${zodiac}`,
 			throwHttpErrors: false,
 			responseType: "json"
 		});
 
-		if (statusCode !== 200) {
-			throw new sb.errors.APIError({
-				statusCode,
-				apiName: "HoroscopeHerokuAPI"
-			});
-		}
-
 		return {
-			reply: `Your horoscope for today: ${data.horoscope}`
+			reply: `Your horoscope for today: ${response.body.horoscope}`
 		};
 	}),
 	Dynamic_Description: null

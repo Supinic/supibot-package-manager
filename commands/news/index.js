@@ -609,7 +609,7 @@ module.exports = {
 
 		let availableLanguages = await sb.Cache.getByPrefix(this);
 		if (!availableLanguages) {
-			const { languages } = await sb.Got({
+			const { languages } = await sb.Got("GenericAPI", {
 				url: "https://api.currentsapi.services/v1/available/languages",
 				headers: {
 					Authorization: sb.Config.get("API_CURRENTSAPI_TOKEN")
@@ -654,7 +654,7 @@ module.exports = {
 
 		let response;
 		try {
-			response = await sb.Got({
+			response = await sb.Got("GenericAPI", {
 				url: "https://api.currentsapi.services/v1/search",
 				searchParams: params.toString(),
 				headers: {
@@ -663,14 +663,14 @@ module.exports = {
 				throwHttpErros: false,
 				responseType: "json",
 				retry: 0,
-				timeout: 5000
+				timeout: 2500
 			});
 		}
 		catch (e) {
 			if (e instanceof sb.Got.TimeoutError) {
 				return {
 					success: false,
-					reply: "Response timed out - no valid keywords used!"
+					reply: "No relevant news articles found!"
 				};
 			}
 			else {
@@ -678,23 +678,16 @@ module.exports = {
 			}
 		}
 
-		const { statusCode, body: data } = response;
-		if (statusCode !== 200) {
-			throw new sb.errors.APIError({
-				statusCode,
-				reason: data?.message ?? null,
-				apiName: "CurrentsAPI"
-			});
-		}
-
-		const { news } = data;
+		const { news } = response.body;
 		if (!news) {
 			return {
+				success: false,
 				reply: "No news data returned!"
 			};
 		}
 		else if (news.length === 0) {
 			return {
+				success: false,
 				reply: "No relevant articles found!"
 			};
 		}
