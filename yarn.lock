@@ -2233,7 +2233,7 @@ strip-json-comments@3.1.1, strip-json-comments@^3.1.0, strip-json-comments@^3.1.
 
 "supi-core@github:Supinic/supi-core":
   version "2.2.0"
-  resolved "https://codeload.github.com/Supinic/supi-core/tar.gz/79615eb254cffa3d27c3167a17f719e59f54ab1e"
+  resolved "https://codeload.github.com/Supinic/supi-core/tar.gz/9b04e6f0ad7a824b6b44521e6dc8a13a75ab9fe0"
   dependencies:
     async-markov "github:supinic/async-markov"
     cheerio "^1.0.0-rc.5"
