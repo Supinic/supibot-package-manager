@@ -62,7 +62,6 @@ module.exports = {
 				{}
 			);
 			const gistResult = await gistCommand.execute(fakeCtx, context.params.importGist);
-			console.log(`command result`, gistResult);
 			if (gistResult.success === false) {
 				return gistResult;
 			}
