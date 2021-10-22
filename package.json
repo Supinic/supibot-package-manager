@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "scripts": {
     "test": "mocha \"./@(chat-modules|commands|crons)/**/*.test.js\" ./tests/**/*.test.js  --exit",
     "lint": "eslint .",
