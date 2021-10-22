@@ -1,4 +1,5 @@
-import * as got from "./got/index.js";
+import { Got } from "./got/index.js";
+
 export {
-	got
+	Got
 };
