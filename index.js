@@ -1,4 +1,4 @@
-const commands = require("./commands/index.js");
+const commands = await require("./commands/index.js");
 
 return {
 	commands
