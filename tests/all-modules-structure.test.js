@@ -10,7 +10,10 @@ describe("global module suite", () => {
 			name: "commands",
 			singular: "command",
 			directory: "commands",
-			fileList: fs.readdirSync("./commands"),
+			fileList: fs.readdirSync("./commands", { withFileTypes: true })
+				.filter(i => i.isDirectory())
+				.map(i => i.name),
+
 			validProperties: require("./properties-validation/commands.js"),
 			definitions: []
 		},
