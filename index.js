@@ -1,7 +1,7 @@
-(async () => {
+module.exports = (async () => {
 	const commands = await require("./commands/index.js");
 
-	module.exports = {
+	return {
 		commands
 	};
 })();
