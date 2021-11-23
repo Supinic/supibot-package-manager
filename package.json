@@ -9,8 +9,7 @@
     "babel-eslint": "^10.1.0",
     "eslint": "^7.1.0",
     "eslint-plugin-unicorn": "^32.0.1",
-    "mocha": "^8.4.0",
-    "supi-core": "github:Supinic/supi-core"
+    "mocha": "^8.4.0"
   },
   "name": "supibot-package-manager",
   "version": "1.0.0",
