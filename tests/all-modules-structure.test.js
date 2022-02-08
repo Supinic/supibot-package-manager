@@ -21,7 +21,9 @@ describe("global module suite", () => {
 			name: "chat modules",
 			singular: "chat module",
 			directory: "chat-modules",
-			fileList: fs.readdirSync("./chat-modules"),
+			fileList: fs.readdirSync("./chat-modules", { withFileTypes: true })
+				.filter(i => i.isDirectory())
+				.map(i => i.name),
 			validProperties: require("./properties-validation/chat-modules.js"),
 			definitions: []
 		},

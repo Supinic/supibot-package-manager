@@ -29,7 +29,12 @@ module.exports = [
 		)
 	},
 	{
-		name: "Author",
+		name: "Global",
+		valueKind: "Literal",
+		valueTypes: ["boolean"]
+	},
+	{
+		name: "Platform",
 		valueKind: "Literal",
 		valueTypes: ["string", "null"]
 	}
