@@ -31,7 +31,9 @@ describe("global module suite", () => {
 			name: "crons",
 			singular: "cron",
 			directory: "crons",
-			fileList: fs.readdirSync("./crons"),
+			fileList: fs.readdirSync("./crons", { withFileTypes: true })
+				.filter(i => i.isDirectory())
+				.map(i => i.name),
 			validProperties: require("./properties-validation/crons.js"),
 			definitions: []
 		}
