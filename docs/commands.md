@@ -4,19 +4,12 @@ Commands are the essential part of Supibot.
 They create an interface for the chat user to interact with.
 Any communication with the bot, external APIs or other bots is done via commands.
 
-## List
-The active command list can be found in the [commands](../commands) directory.
-Each directory consists of the command's definition in `index.js` files.
-The directory can contain more files such as tests, but that's currently unsupported and not suggested.
-This means all flags, cooldowns, static data, aliases and dynamic descriptions are all available along with its JavaScript code.
-
 ## Definition
+The active command list can be found in the [commands](../commands) directory.
+Each directory consists of the command's definition in its `index.js` file.
+The directory can contain more files such as JSON data, modules or tests.
 
-Supibot is rather unique in the fact that it stores its commands inside of a database table.
-This allows for extremely easy reloading and testing without interrupting the bot runtime.
-As such, version control is non-existent with the database alone, but thanks to this repository, all changes are stored within the commands' index files.
-
-### Table structure
+### Command structure
 
 - Name
     - This is the main name of the command. It will be used in any external reference to it.
@@ -30,6 +23,11 @@ As such, version control is non-existent with the database alone, but thanks to 
 - Cooldown
     - The implicit cooldown, measured in milliseconds.
     - Will be applied unless a [dynamic cooldown](#dynamic-cooldown) is used from the execution of a command.
+- Parameters
+    - `null` if no parameters are present
+    - Otherwise, array of objects, with properties:
+        - `{string} parameter.name` - simply the name of the parameters
+        - `{"string"|"number"|"boolean"|"date"|"object"|"regex"} parameter.type` parameter type - value will be parsed automatically according to this
 - Flags
     - `null` if no flags are present
     - Otherwise, it is an array of strings, where each flag represents a flag set to true.
@@ -80,6 +78,26 @@ This function will be `await`-ed in `checkAndExecute` regardless of whether it i
 
 All command functions are await-ed.
 So, if asynchronous operation is required, feel free to make the function `async` and use `await` inside of it.
+
+#### User parameters
+If a command has the `use-params` flag set and has at least one parameter defined in the `Parameters` property, users can provide specific values for them.
+
+Observe following examples and notice the usage of quote marks for multi-word parameters. 
+Also notice the overriding of the same parameter used multiple times.
+
+- `$foo param:foo` ⇒ `{ param: "foo" }`
+- `$foo param:foo not a part of the parameter` ⇒ `{ param: "foo" }`
+- `$foo param:"foo bar"` ⇒ `{ param: "foo bar" }`
+- `$foo param1:foo param2:"bar baz"` ⇒ `{ param1: "foo", param2: "bar baz" }`
+- `$foo param:foo param:"overriden!"` ⇒ `{ param: "overriden!" }`
+
+Additionally, Supibot has defined a constant `--` (available as `sb.Command.ignoreParametersDelimiter`) that allows to ignore all succeeding parameter-like strings. 
+They will be instead used as the command input.
+This is useful when the input of a command would include literal definition of a parameter. 
+
+- `$foo param:foo -- param:"not overriden"` ⇒ `{ param: "foo" }`
+- `$translate to:german This text goes to:Someone` ⇒ `Error: Cannot recognize language "Someone"`
+- `$translate to:german -- This text goes to:Someone` ⇒ `{ to: "german" }`
 
 #### Arguments
 - `{Object} context` - contains information about the command execution context.
