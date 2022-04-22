@@ -172,13 +172,11 @@ module.exports = {
 						};
 					}
 
-					if (context.append.pipe) {
-						if (!commandData.Flags.pipe) {
-							return {
-								success: false,
-								reply: `Cannot use the ${invocation} command inside of a pipe, despite being wrapped in a run command!`
-							};
-						}
+					if (context.append.pipe && !commandData.Flags.pipe)
+						return {
+							success: false,
+							reply: `Cannot use the ${invocation} command inside of a pipe, despite being wrapped in a run command!`
+						};
 					}
 					else {
 						return {
