@@ -154,6 +154,71 @@ module.exports = {
 				}
 			},
 			{
+				name: "execute",
+				aliases: ["exec", "run"],
+				description: "Executes input as a command.",
+				examples: [
+					["$abb execute -- abb say test", "test"],
+					["$pipe js \"rl\" | abb exec -- | tt fancy", "(2𝔂, 292𝓭 𝓪𝓰𝓸) 𝓵𝓮𝓹𝓹𝓾𝓷𝓮𝓷: 𝓸𝓴"]
+				],
+				execute: (context, ...args) => {
+					let [ invocation, ...commandArgs ] = args;
+					const commandData = sb.Command.get(invocation);
+
+					if (!commandData) {
+						return {
+							success: false,
+							reply: `The command ${invocation} does not exist!`
+						};
+					}
+
+					if (context.append.pipe) {
+						if (!commandData.Flags.pipe) {
+							return {
+								success: false,
+								reply: `Cannot use the ${invocation} command inside of a pipe, despite being wrapped in a run command!`
+							};
+						}
+					}
+					else {
+						return {
+							success: false,
+							reply: `This command can only be used within pipes!.`
+						};
+					}
+
+					const { aliasTry } = context.append;
+					if (commandData.Name === "alias" && aliasTry?.userName && (commandArgs[0] === "run" || invocation === "$")) {
+						if (commandArgs[0] === "run") {
+							commandArgs.splice(0, 1);
+						}
+
+						commandArgs = ["try", aliasTry.userName, ...commandArgs];
+					}
+
+					const result = await sb.Command.checkAndExecute(
+						invocation,
+						commandArgs,
+						context.channel,
+						context.user,
+						{
+							...context.append,
+							platform: context.platform,
+							skipBanphrases: true,
+							skipMention: true,
+							skipPending: true,
+							partialExecute: true,
+							tee: context.tee
+						}
+					);
+
+					return {
+						...result,
+						hasExternalInput: Boolean(result?.hasExternalInput ?? commandData.Flags.externalInput)
+					};
+				}
+			},
+			{
 				name: "explode",
 				aliases: [],
 				description: "Adds a space between all characters of the provided input - then, each one can be used as a specific argument.",
