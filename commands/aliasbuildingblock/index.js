@@ -161,7 +161,7 @@ module.exports = {
 					["$abb execute -- abb say test", "test"],
 					["$pipe js \"rl\" | abb exec -- | tt fancy", "(2𝔂, 292𝓭 𝓪𝓰𝓸) 𝓵𝓮𝓹𝓹𝓾𝓷𝓮𝓷: 𝓸𝓴"]
 				],
-				execute: (context, ...args) => {
+				execute: async (context, ...args) => {
 					let [ invocation, ...commandArgs ] = args;
 					const commandData = sb.Command.get(invocation);
 
