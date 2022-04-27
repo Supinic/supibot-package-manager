@@ -5,10 +5,11 @@
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@babel/core": "^7.17.9",
+    "@babel/eslint-parser": "^7.17.0",
     "acorn-node": "^2.0.1",
-    "babel-eslint": "^10.1.0",
-    "eslint": "^7.1.0",
-    "eslint-plugin-unicorn": "^41.0.0",
+    "eslint": "^8.14.0",
+    "eslint-plugin-unicorn": "^42.0.0",
     "mocha": "^8.4.0"
   },
   "name": "supibot-package-manager",
