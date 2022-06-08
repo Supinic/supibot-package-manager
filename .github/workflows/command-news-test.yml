@@ -2,10 +2,10 @@ name: Automated test for the $news command's RSS definitions
 
 on:
   push:
-    paths: ["./commands/news/definitions.json"]
+    paths: ["commands/news/definitions.json"]
     branches: [ master ]
   pull_request:
-    paths: ["./commands/news/definitions.json"]
+    paths: ["commands/news/definitions.json"]
     branches: [ master ]
 
 jobs:
