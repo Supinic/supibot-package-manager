@@ -9,8 +9,12 @@ on:
     branches: [ master ]
 
 jobs:
-  structure-tests:
+  news-definitions-tests:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
 
     steps:
       - uses: actions/checkout@v2
