@@ -1,6 +1,6 @@
 /* eslint-disable max-nested-callbacks, prefer-arrow-callback */
 const assert = require("assert");
-const definitions = require("./definitions.json").sort((a, b) => a.code.localeCompare(b.code));
+const definitions = require("../commands/news/definitions.json").sort((a, b) => a.code.localeCompare(b.code));
 
 describe("valid RSS news definitions", function () {
 	if (typeof globalThis.fetch !== "function") {
