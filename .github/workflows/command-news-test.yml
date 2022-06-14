@@ -19,4 +19,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: yarn install --frozen-lockfile
-      - run: mocha ./separate-tests/news-definitions.test.js
+      - run: mocha ./separate-tests/news-definitions.test.js --exit
