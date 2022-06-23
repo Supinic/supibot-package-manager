@@ -221,13 +221,13 @@ Since all command code functions are `await`ed, it doesn't really make a differe
 
     const rawData = await sb.Got({
         url: `https://${language}.wikipedia.org/w/api.php`,
-        searchParams: new sb.URLParams()
-            .set("format", "json")
-            .set("action", "query")
-            .set("prop", "extracts")
-            .set("redirects", "1")
-            .set("titles", args.map(i => sb.Utils.capitalize(i)).join(" "))
-            .toString()
+        searchParams: {
+			format: "json",
+            action: "query",
+            prop: "extracts",
+            redirects: "1",
+            titles: args.map(i => sb.Utils.capitalize(i)).join(" ")
+		}
     }).json();
 
     const data = rawData.query.pages;
