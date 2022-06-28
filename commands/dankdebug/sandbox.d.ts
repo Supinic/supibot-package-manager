@@ -26,12 +26,12 @@ declare type SupibotDankDebugUtils = {
 	 * Returns the first emote from the list that is available from in the current context.
 	 * If none of the emotes are available, the fallback is returned instead.
 	 */
-	getEmote(emotes: string[], fallback: string): string,
+	async getEmote(emotes: string[], fallback: string): string,
 
 	/**
 	 * Returns a list of all emotes available for supibot to post in the current context.
 	 */
-	fetchEmotes(): string[],
+	async fetchEmotes(): string[],
 
 	/**
 	 * Returns the string with an invisible character inserted after the first character.
