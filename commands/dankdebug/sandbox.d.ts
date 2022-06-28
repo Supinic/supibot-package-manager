@@ -26,12 +26,12 @@ declare type SupibotDankDebugUtils = {
 	 * Returns the first emote from the list that is available from in the current context.
 	 * If none of the emotes are available, the fallback is returned instead.
 	 */
-	async getEmote(emotes: string[], fallback: string): string,
+	getEmote(emotes: string[], fallback: string): Promise<string>,
 
 	/**
 	 * Returns a list of all emotes available for supibot to post in the current context.
 	 */
-	async fetchEmotes(): string[],
+	fetchEmotes(): Promise<string[]>,
 
 	/**
 	 * Returns the string with an invisible character inserted after the first character.
@@ -126,10 +126,13 @@ declare const global: typeof globalThis;
 declare const aliasStack: string[];
 
 /**
- * The arguments passed with the $js invocation, if the function parameter was used.
- * Null in other invocations.
+ * This variable is conditionally set based on how $js is invoked:
+ * Using the function parameter, this variable will be a string array of input passed to the $js command.
+ * Using the arguments parameter, this variable will be the JSON parsed form the value of the parameter (including primitives).
+ *
+ * In all other cases when neither the function parameter nor the arguments parameter is provided, the value is null.
  */
-declare const args: string[] | null;
+declare const args: null | string[] | JSONifiable;
 
 /**
  * The channel the command is being executed in.
