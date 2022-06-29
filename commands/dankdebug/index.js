@@ -198,7 +198,7 @@ module.exports = {
 		"",
 
 		`<code>${prefix}js errorInfo:true (JavaScript code)</code>`,
-		"Runs your code as normal, but if there is an error, it will post a link to where you can view the entire call stack and script, e.g.:"
+		"Runs your code as normal, but if there is an error, it will post a link to where you can view the entire call stack and script, e.g.:",
 		`<code>${prefix}js errorInfo:true throw new Error('Critical error!')</code> => <code>Error: Critical error! - More info: &lt;link&gt;</code>`,
 		"If there is an error without <code>errorInfo:true</code> provided, only the error message is provided back.",
 		`<code>${prefix}js throw new Error('Critical error!')</code> => <code>Error: Critical error!</code>`,
@@ -223,6 +223,6 @@ module.exports = {
 		`<code>${prefix}js importGist:(gist ID)</code>`,
 		`<code>${prefix}js importGist:(gist ID) force:true</code>`,
 		`Prepends a GitHub gist to the beginning of your code before running it. For more information about file selection, caching, and length limits, see the <a href="/bot/command/detail/pastebin">${prefix}pastebin</a> command.`,
-		`The force parameter does the same as in the <a href="/bot/command/detail/pastebin">${prefix}pastebin</a> command, and skips caching when fetching the gist.`,
+		`The force parameter does the same as in the <a href="/bot/command/detail/pastebin">${prefix}pastebin</a> command, and skips caching when fetching the gist.`
 	])
 };
