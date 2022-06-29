@@ -21,7 +21,7 @@ declare type SupibotParameterDescriptor = {
 /**
  * The type of the global `utils` object.
  */
-declare type SupibotDankDebugUtils = {
+declare interface SupibotDankDebugUtils {
 	/**
 	 * Returns the first emote from the list that is available from in the current context.
 	 * If none of the emotes are available, the fallback is returned instead.
@@ -42,7 +42,7 @@ declare type SupibotDankDebugUtils = {
 	 * Takes a string value, and parses it according as the provided type.
 	 * This is the underlying function used to parse parameters for all supibot commands.
 	 */
-	parseParameter(value: string, type: SupibotParameterType): SupibotParameterParsedType;
+	parseParameter(value: string, type: SupibotParameterType): SupibotParameterParsedType | null;
 
 	/**
 	 * Parses parameters from arguments in the same manner supibot does for commands.
@@ -65,7 +65,7 @@ declare type SupibotDankDebugUtils = {
 	/**
 	 * Capitalizes the string's first letter.
 	 */
-	capitalize(string): string;
+	capitalize(string: string): string;
 
 	/**
 	 * Returns a random array element.
@@ -101,7 +101,7 @@ declare type SupibotDankDebugUtils = {
 	 * Pads a number with specified number of zeroes.
 	 */
 	zf(number: number, padding: number): string;
-};
+}
 
 /** A value that can be stored in a supibot store */
 declare type SupibotStoreValue = string | number | boolean | null | undefined;
