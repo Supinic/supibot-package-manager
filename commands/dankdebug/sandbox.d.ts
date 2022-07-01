@@ -44,10 +44,10 @@ declare namespace DankDebug {
 		unping(string: string): string;
 
 		/**
-		 * Takes a string value, and parses it according as the provided type.
+		 * Takes a string value, and parses it according to the provided type.
 		 * This is the underlying function used to parse parameters for all supibot commands.
 		 */
-		parseParameter: (value: string, type: Parameter.Type) => typeof Command.parseParameter;
+		parseParameter: (value: string, type: Parameter.Type) => ReturnType<typeof Command.parseParameter>;
 
 		/**
 		 * Parses parameters from arguments in the same manner supibot does for commands.
