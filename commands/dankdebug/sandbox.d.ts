@@ -1,4 +1,4 @@
-import type { JSONifiable } from 'supi-core/@types/globals';
+import type { JSONifiable, Emote } from 'supi-core/@types/globals';
 import type { Command, Parameter } from 'supi-core/@types/classes/command';
 import type { UtilsSingleton } from 'supi-core/@types/singletons/utils';
 
@@ -36,7 +36,7 @@ declare namespace DankDebug {
 		/**
 		 * Returns a list of all emotes available for supibot to post in the current context.
 		 */
-		fetchEmotes(): Promise<string[]>,
+		fetchEmotes(): Promise<Emote[]>,
 
 		/**
 		 * Returns the string with an invisible character inserted after the first character.
