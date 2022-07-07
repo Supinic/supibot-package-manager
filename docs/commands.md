@@ -43,7 +43,6 @@ The directory can contain more files such as JSON data, modules or tests.
         - `rollback` A transaction will be provided to the command, and it will automatically commit or rollback based on if it succeeds or not.
         - `skip-banphrase` Result reply will not be checked against any banphrases.
         - `system` Is not shown on the website command list, unless the logged in user is flagged as an administrator.
-        - `use-params` Automatically parses provided arguments in format `(key):(value)` to an object, passed into the command's execution context as `context.params`.
         - `whitelist` The command is not available by default, and only Whitelist Filters can allow the usage.  
 - Code
     - The actual function code of the command.
@@ -80,7 +79,7 @@ All command functions are await-ed.
 So, if asynchronous operation is required, feel free to make the function `async` and use `await` inside of it.
 
 #### User parameters
-If a command has the `use-params` flag set and has at least one parameter defined in the `Parameters` property, users can provide specific values for them.
+If a command has at least one parameter defined, users can provide specific values for them.
 
 Observe following examples and notice the usage of quote marks for multi-word parameters. 
 Also notice the overriding of the same parameter used multiple times.
@@ -111,7 +110,7 @@ This is useful when the input of a command would include literal definition of a
 	- `{DatabaseConnector} context.transaction` If a command is rollbackable, it muse *this* database connector to ensure possible rollbacks.
 	 For an example, refer to the [cookie](https://github.com/Supinic/supibot-sql/blob/master/commands/cookie.sql) command code for an example of using transactions properly.
 	`{boolean} context.privateMessage` If true, the command is being invoked in PMs. Simply a visual sugar for checking `context.channel === null`.
-	`{Object} [context.params]` If the command has the `use-params` flag, this object will hold the values.
+	`{Object} [context.params]` If the command has any parameters declared, this object will hold the values.
 	- `{Object} contex.append` More data about invocation context, most likely platform-specific.
 	I.e. on Twitch, you can see the badges and user colour of the user who invoked it.
 
