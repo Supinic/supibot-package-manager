@@ -45,7 +45,7 @@ module.exports = [
 				return false;
 			}
 
-			const allowedTypes = ["boolean", "date", "number", "string", "object", "regex"];
+			const allowedTypes = ["boolean", "date", "number", "string", "object", "regex", "language"];
 			const paramNames = new Set();
 			const params = v.elements;
 			for (const param of params) {
