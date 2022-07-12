@@ -5,8 +5,10 @@ module.exports = {
 	execute: async (context, type, user) => {
 		if (user === "total" || type === "tcc") {
 			const cookies = await sb.Query.getRecordset(rs => rs
-				.select("SUM(Cookies_Total) AS Total", "SUM(Cookie_Gifts_Sent) AS Gifts")
-				.from("chat_data", "Extra_User_Data")
+				.select("SUM(JSON_VALUE(Value, '$.total')) AS Total")
+				.select("SUM(JSON_VALUE(Value, '$.gifted')) AS Gifts")
+				.from("chat_data", "User_Alias_Data")
+				.where("Property = %s", "cookie")
 				.single()
 			);
 
@@ -22,26 +24,25 @@ module.exports = {
 
 		const targetUser = await sb.User.get(user ?? context.user, true);
 		if (!targetUser) {
-			return { reply: "Target user does not exist in the database!" };
+			return {
+				reply: "Target user does not exist in the database!"
+			};
 		}
 		else if (targetUser.Name === context.platform.Self_Name) {
-			return { reply: "I don't eat cookies, sugar is bad for my circuits!" };
+			return {
+				reply: "I don't eat cookies, sugar is bad for my circuits!"
+			};
 		}
 
-		const cookies = await sb.Query.getRecordset(rs => rs
-			.select("Cookie_Today AS Today", "Cookies_Total AS Daily")
-			.select("Cookie_Gifts_Sent AS Sent", "Cookie_Gifts_Received AS Received")
-			.from("chat_data", "Extra_User_Data")
-			.where("User_Alias = %n", targetUser.ID)
-			.single()
-		);
-
+		const cookieData = await targetUser.getDataProperty("cookie");
 		const [who, target] = (context.user.ID === targetUser.ID)
 			? ["You have", "you"]
 			: ["That user has", "them"];
 
-		if (!cookies || cookies.Daily === 0) {
-			return { reply: `${who} never eaten a single cookie!` };
+		if (!cookieData || cookieData.total === 0) {
+			return {
+				reply: `${who} never eaten a single cookie!`
+			};
 		}
 		else {
 			// Today = has a cookie available today
