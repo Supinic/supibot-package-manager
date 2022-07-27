@@ -725,7 +725,7 @@
     ]
   },
   {
-    "code": "uk",
+    "code": "gb",
     "language": "english",
     "sources": [
       {
@@ -847,6 +847,19 @@
         "path": null,
         "endpoints": ["feed"],
         "helpers": ["rod41732"]
+      }
+    ]
+  },
+  {
+    "code": "kp",
+    "language": "Korean",
+    "sources": [
+      {
+        "name": "Daily NK",
+        "url": "https://www.dailynk.com",
+        "path": null,
+        "endpoints": ["feed"],
+        "helpers": ["ALazyMeme"]
       }
     ]
   },
