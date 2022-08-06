@@ -3,14 +3,14 @@ module.exports = {
 	Aliases: ["ll","lastmessage","lm"],
 	Author: "supinic",
 	Cooldown: 5000,
-	Description: "Posts the target user's last chat line in the context of the current channel, and the date they sent it.",
+	Description: "Posts the target user's last chat line in the context of the current or a specified channel, and the date they sent it.",
 	Flags: ["external-input","mention","opt-out","pipe"],
 	Params: [
 		{ name: "textOnly", type: "boolean" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
-	Code: (async function lastLine (context, user) {
+	Code: (async function lastLine (context, user, channel) {
 		if (!user) {
 			return {
 				success: false,
@@ -46,8 +46,19 @@ module.exports = {
 			};
 		}
 
-		let data = null;
-		if ([7, 8, 46].includes(context.channel.ID)) {
+		const targetChannel = (channel)
+			? await sb.Channel.get(channel)
+			: context.channel;
+
+		if (!targetChannel) {
+			return {
+				success: false,
+				reply: "Channel not found in the database!"
+			};
+		}
+
+		let data;
+		if ([7, 8, 46].includes(targetChannel.ID)) {
 			data = (await sb.Query.getRecordset(rs => rs
 				.select("Last_Message_Text AS Message", "Last_Message_Posted AS Posted")
 				.from("chat_data", "Message_Meta_User_Alias")
@@ -61,14 +72,14 @@ module.exports = {
 				.select("Last_Message_Text AS Message", "Last_Message_Posted AS Posted")
 				.from("chat_data", "Message_Meta_User_Alias")
 				.where("User_Alias = %n", userID)
-				.where("Channel = %n", context.channel.ID)
+				.where("Channel = %n", targetChannel.ID)
 			))[0];
 		}
 
 		if (!data) {
 			return {
 				success: false,
-				reply: "That user has not said anything in this channel!"
+				reply: "That user has not said anything in the specified channel!"
 			};
 		}
 
