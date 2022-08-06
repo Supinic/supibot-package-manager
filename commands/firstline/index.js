@@ -10,7 +10,7 @@ module.exports = {
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
-	Code: (async function firstLine (context, user) {
+	Code: (async function firstLine (context, user, channel) {
 		if (!context.channel) {
 			return {
 				success: false,
@@ -29,11 +29,22 @@ module.exports = {
 			};
 		}
 
+		const targetChannel = (channel)
+			? await sb.Channel.get(channel)
+			: context.channel;
+
+		if (!targetChannel) {
+			return {
+				success: false,
+				reply: "Provided channel not found in the database!"
+			}
+		}
+
 		let metaData = await sb.Query.getRecordset(rs => rs
 			.select("First_Message_Posted", "First_Message_Text")
 			.from("chat_data", "Message_Meta_User_Alias")
 			.where("User_Alias = %n", targetUser.ID)
-			.where("Channel = %n", context.channel.ID)
+			.where("Channel = %n", targetChannel.ID)
 			.limit(1)
 			.single()
 		);
@@ -41,15 +52,15 @@ module.exports = {
 		if (!metaData) {
 			return {
 				success: false,
-				reply: "That user has not said anything in this channel!"
+				reply: "That user has not said anything in the specified channel!"
 			};
 		}
 		else if (!metaData.First_Message_Posted) {
-			const dbChannelName = context.channel.getDatabaseName();
+			const dbChannelName = targetChannel.getDatabaseName();
 			if (!await sb.Query.isTablePresent("chat_line", dbChannelName)) {
 				return {
 					success: false,
-					reply: `No first line data is available for that user in this channel!`
+					reply: `No first line data is available for that user in the specified channel!`
 				};
 			}
 
@@ -65,7 +76,7 @@ module.exports = {
 			const row = await sb.Query.getRow("chat_data", "Message_Meta_User_Alias");
 			await row.load({
 				User_Alias: targetUser.ID,
-				Channel: context.channel.ID
+				Channel: targetChannel.ID
 			});
 
 			row.setValues({
@@ -92,7 +103,7 @@ module.exports = {
 			partialReplies: [
 				{
 					bancheck: false,
-					message: `${prefix} first message in this channel was (${sb.Utils.timeDelta(metaData.First_Message_Posted)}):`
+					message: `${prefix} first message in the specified channel was (${sb.Utils.timeDelta(metaData.First_Message_Posted)}):`
 				},
 				{
 					bancheck: true,
