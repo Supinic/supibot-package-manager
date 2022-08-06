@@ -47,7 +47,7 @@ module.exports = {
 		}
 
 		const targetChannel = (channel)
-			? await sb.Channel.get(channel)
+			? sb.Channel.get(channel)
 			: context.channel;
 
 		if (!targetChannel) {
