@@ -118,5 +118,28 @@ module.exports = {
 			]
 		};
 	}),
-	Dynamic_Description: null
+	Dynamic_Description: (async (prefix) => [
+		"Posts the target user's first chat line.",
+		"",
+
+		"You can specify a channel as context with the channel parameter (see examples below).",
+		"If you don't specify a channel, the current channel will be used as context.",
+		"The command can only be used in whispers, if you specify a valid channel.",
+		"",
+
+		`<code>${prefix}firstline</code>`,
+		"Your first message in this channel was...",
+		"",
+
+		`<code>${prefix}fl (user)</code>`,
+		"That user's first message in this channel was...",
+		"",
+
+		`<code>${prefix}fl channel:(channel)</code>`,
+		"Your first message in the specified channel was...",
+		"",
+
+		`<code>${prefix}fl (user) channel:(channel)</code>`,
+		"That user's first message in the specified channel was..."
+	])
 };
