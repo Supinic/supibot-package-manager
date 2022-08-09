@@ -31,6 +31,10 @@ module.exports = {
 			}
 		}
 
+		const channelArticle = (targetChannel === context.channel)
+			? "this"
+			: "the specified";
+
 		const targetUser = (user)
 			? await sb.User.get(user)
 			: context.user;
@@ -54,7 +58,7 @@ module.exports = {
 		if (!metaData) {
 			return {
 				success: false,
-				reply: "That user has not said anything in the specified channel!"
+				reply: `That user has not said anything in ${channelArticle} channel!`
 			};
 		}
 		else if (!metaData.First_Message_Posted) {
@@ -62,7 +66,7 @@ module.exports = {
 			if (!await sb.Query.isTablePresent("chat_line", dbChannelName)) {
 				return {
 					success: false,
-					reply: `No first line data is available for that user in the specified channel!`
+					reply: `No first line data is available for that user in ${channelArticle} channel!`
 				};
 			}
 
@@ -105,7 +109,7 @@ module.exports = {
 			partialReplies: [
 				{
 					bancheck: false,
-					message: `${prefix} first message in the specified channel was (${sb.Utils.timeDelta(metaData.First_Message_Posted)}):`
+					message: `${prefix} first message in ${channelArticle} channel was (${sb.Utils.timeDelta(metaData.First_Message_Posted)}):`
 				},
 				{
 					bancheck: true,
