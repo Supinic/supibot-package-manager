@@ -20,17 +20,6 @@ module.exports = {
 			};
 		}
 
-		const targetUser = (user)
-			? await sb.User.get(user)
-			: context.user;
-
-		if (!targetUser) {
-			return {
-				success: false,
-				reply: "Provided user not found in the database!"
-			};
-		}
-
 		const targetChannel = (channel)
 			? sb.Channel.get(channel)
 			: context.channel;
@@ -40,6 +29,17 @@ module.exports = {
 				success: false,
 				reply: "Provided channel not found in the database!"
 			}
+		}
+
+		const targetUser = (user)
+			? await sb.User.get(user)
+			: context.user;
+
+		if (!targetUser) {
+			return {
+				success: false,
+				reply: "Provided user not found in the database!"
+			};
 		}
 
 		let metaData = await sb.Query.getRecordset(rs => rs
