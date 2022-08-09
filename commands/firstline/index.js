@@ -33,7 +33,7 @@ module.exports = {
 
 		const channelArticle = (targetChannel === context.channel)
 			? "this"
-			: "the specified";
+			: "that";
 
 		const targetUser = (user)
 			? await sb.User.get(user)
