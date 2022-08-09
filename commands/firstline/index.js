@@ -46,6 +46,10 @@ module.exports = {
 			};
 		}
 
+		const userArticle = (targetUser === context.user)
+			? "You have"
+			: "That user has";
+
 		let metaData = await sb.Query.getRecordset(rs => rs
 			.select("First_Message_Posted", "First_Message_Text")
 			.from("chat_data", "Message_Meta_User_Alias")
@@ -58,7 +62,7 @@ module.exports = {
 		if (!metaData) {
 			return {
 				success: false,
-				reply: `That user has not said anything in ${channelArticle} channel!`
+				reply: `${userArticle} not said anything in ${channelArticle} channel!`
 			};
 		}
 		else if (!metaData.First_Message_Posted) {
@@ -66,7 +70,7 @@ module.exports = {
 			if (!await sb.Query.isTablePresent("chat_line", dbChannelName)) {
 				return {
 					success: false,
-					reply: `No first line data is available for that user in ${channelArticle} channel!`
+					reply: `${userArticle} no first line data available in ${channelArticle} channel!`
 				};
 			}
 
