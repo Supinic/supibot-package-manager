@@ -6,15 +6,17 @@ module.exports = {
 	Description: "Posts the target user's first chat line in the context of the current or a specified channel, and the date they sent it.",
 	Flags: ["external-input","mention","opt-out","pipe"],
 	Params: [
+		{ name: "channel", type: "string" },
 		{ name: "textOnly", type: "boolean" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
-	Code: (async function firstLine (context, user, channel) {
-		if (!context.channel) {
+	Code: (async function firstLine (context, user) {
+		const { channel } = context.params;
+		if (!context.channel && !channel) {
 			return {
 				success: false,
-				reply: "This command is not available in private messages!"
+				reply: "In order to use this command in private messages, you have to provide a channel parameter! Check the command's extended help for more info."
 			};
 		}
 
