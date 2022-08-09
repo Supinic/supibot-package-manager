@@ -17,8 +17,8 @@ module.exports = {
 			};
 		}
 
-		const response = await sb.Got("GenericAPI", {
-			url: `https://api-prod.downfor.cloud/httpcheck/${fixedInput}`
+		const response = await sb.Got("GenericAPI",{
+			url: `https://sitecheck.sucuri.net/api/v3/?scan=${fixedInput}`
 		});
 
 		if (response.statusCode !== 200) {
@@ -28,26 +28,34 @@ module.exports = {
 			};
 		}
 
-		const now = sb.Date.now();
-		const { isDown, lastChecked, statusCode } = response.body;
-		const deltaString = (Math.abs(now - lastChecked) > 1000)
-			? ` Last checked ${sb.Utils.timeDelta(new sb.Date(lastChecked))}.`
-			: "";
-
-		if (statusCode === 0) {
+		const { scan, warnings } = response.body;
+		if (scan?.error) {
 			return {
 				success: false,
-				reply: `Could not check the website being down due to API error! Please try a different format.`
+				reply: `Cannot check website status! ${scan.error}`
 			};
 		}
-		else if (isDown) {
-			return {
-				reply: `That website is currently not available with status code ${statusCode}.${deltaString}`
-			};
+
+		const lastScan = new sb.Date(scan.last_scan);
+		const delta = sb.Utils.timeDelta(lastScan);
+
+		if (Array.isArray(warnings?.scan_failed)) {
+			const error = warnings.scan_failed[0].msg;
+			if (error === "Host not found") {
+				return {
+					success: false,
+					reply: `Provided website was not found!`
+				};
+			}
+			else {
+				return {
+					reply: `Website is currently down: ${error ?? "(N/A)"}. Last scanned ${delta}.`
+				};
+			}
 		}
 		else {
 			return {
-				reply: `That website is currently up and available.${deltaString}`
+				reply: `That website is currently up and available. Last scanned ${delta}.`
 			};
 		}
 	}),
