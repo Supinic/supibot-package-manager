@@ -144,6 +144,10 @@ module.exports = {
 		"",
 
 		`<code>${prefix}fl (user) channel:(channel)</code>`,
-		"That user's first message in the specified channel was..."
+		"That user's first message in the specified channel was...",
+		"",
+
+		`<code>${prefix}fl textOnly:true</code>`,
+		"(first message text here)"
 	])
 };
