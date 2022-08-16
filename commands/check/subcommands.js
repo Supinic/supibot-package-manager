@@ -419,7 +419,7 @@ module.exports = (command) => [
 		aliases: ["songrequests"],
 		description: `For supinic's Twitch channel, checks the current status of song requests.`,
 		execute: async (context) => {
-			if (context?.channel.ID !== 38) {
+			if (context.channel?.ID !== 38) {
 				return {
 					success: false,
 					reply: "Only usable in Supinic's Twitch channel!"
