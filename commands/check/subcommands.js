@@ -593,7 +593,8 @@ module.exports = (command) => [
 			// @todo refactor this and similar usages to a common place
 			if (link.toLowerCase() === "last") {
 				const tl = sb.Command.get("tl");
-				const key = tl.staticData.createRecentUseCacheKey(context);
+				const definitions = require("../twitchlotto/definitions.js");
+				const key = definitions.createRecentUseCacheKey(context);
 
 				const cacheData = await tl.getCacheData(key);
 				if (!cacheData) {
