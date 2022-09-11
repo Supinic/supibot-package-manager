@@ -6,7 +6,7 @@ module.exports = {
 	Description: "Ping!",
 	Flags: ["pipe","skip-banphrase"],
 	Params: [
-		{ name: "format", type: "string"}
+		{ name: "format", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({

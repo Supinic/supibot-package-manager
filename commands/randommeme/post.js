@@ -95,6 +95,6 @@ module.exports = class RedditPost {
 			nsfw: this.#nsfw,
 			stickied: this.#stickied,
 			score: this.#score
-		}
+		};
 	}
 };

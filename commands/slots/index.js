@@ -109,7 +109,7 @@ module.exports = {
 					${dankEmote} 
 					You won and beat the odds of 100%.
 					${deprecationWarning}
-					`
+					`;
 				if (context.params.format === "json") {
 					return {
 						reply: JSON.stringify({
@@ -161,10 +161,10 @@ module.exports = {
 				${sb.Utils.round(chance * 100, 3)}%
 				(that is 1 in ${reverseChance})
 				${deprecationWarning}
-				`
+				`;
 			
 			if (context.params.format === "json") {
-				console.log('JSON WIN')
+				console.log("JSON WIN");
 				return {
 					reply: JSON.stringify({
 						raw: reply,
@@ -173,24 +173,24 @@ module.exports = {
 							win: true
 						}
 					})
-				}
+				};
 			}
 			return {
 				reply
 			};
 		}
 
-		const reply = `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`
+		const reply = `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`;
 		if (context.params.format === "json") {
 			return {
 				reply: JSON.stringify({
-			 		raw: reply,
-			 		parsed: {
-			 			rolledItems,
-			 			win: false
-			 		}
+					raw: reply,
+					parsed: {
+						rolledItems,
+						win: false
+					}
 				})
-			}
+			};
 		}
 		return {
 			reply

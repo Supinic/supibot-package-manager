@@ -7,7 +7,7 @@ module.exports = {
 	Flags: ["external-input","mention","non-nullable","pipe"],
 	Params: [
 		{ name: "summary", type: "boolean" },
-		{ name: "youtube", type: "string" },
+		{ name: "youtube", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
