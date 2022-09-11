@@ -80,4 +80,21 @@ module.exports = class RedditPost {
 
 		return `${this.#title} ${this.#url} (Score: ${this.#score}, posted ${this.posted}${xpost})`;
 	}
+
+	toObject () {
+		return {
+			author: this.#author,
+			created: this.#created,
+			id: this.#id,
+			title: this.#title,
+			url: this.#url,
+			commentsUrl: this.#commentsUrl,
+			flairs: this.#flairs,
+			crosspostOrigin: this.#crosspostOrigin,
+			isTextPost: this.#isTextPost,
+			nsfw: this.#nsfw,
+			stickied: this.#stickied,
+			score: this.#score
+		}
+	}
 };
