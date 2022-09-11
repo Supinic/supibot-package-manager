@@ -5,7 +5,9 @@ module.exports = {
 	Cooldown: 5000,
 	Description: "Ping!",
 	Flags: ["pipe","skip-banphrase"],
-	Params: null,
+	Params: [
+		{ name: "format", type: "string"}
+	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({
 		checkLatency: async (callback, ...args) => {
@@ -97,8 +99,17 @@ module.exports = {
 				: `${Math.trunc(ping)}ms`;
 		}
 
+		const reply = `${pong} ${Object.entries(data).map(([name, value]) => `${name}: ${value}`).join("; ")}`;
+		if (context.params.format === "json") {
+			return {
+				reply: JSON.stringify({
+					raw: reply,
+					parsed: data
+				})
+			};
+		}
 		return {
-			reply: `${pong} ${Object.entries(data).map(([name, value]) => `${name}: ${value}`).join("; ")}`
+			reply
 		};
 	}),
 	Dynamic_Description: (async (prefix) => [
