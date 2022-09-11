@@ -6,7 +6,8 @@ module.exports = {
 	Description: "Once at least three unique emotes (or words) have been provided, rolls a pseudo slot machine to see if you get a flush.",
 	Flags: ["mention","pipe"],
 	Params: [
-		{ name: "pattern", type: "string" }
+		{ name: "pattern", type: "string" },
+		{ name: "format", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
@@ -100,17 +101,29 @@ module.exports = {
 
 			uniqueItems = emotes.filter((i, ind, arr) => arr.indexOf(i) === ind).length;
 		}
-
 		if (rolledItems.every(i => rolledItems[0] === i)) {
 			if (uniqueItems === 1) {
 				const dankEmote = await context.getBestAvailableEmote(["FeelsDankMan", "FeelsDonkMan"], "🤡");
-				return {
-					reply: sb.Utils.tag.trim `
-						[ ${rolledItems.join(" ")} ] 
-						${dankEmote} 
-						You won and beat the odds of 100%.
-						${deprecationWarning}
+				const reply = sb.Utils.tag.trim `
+					[ ${rolledItems.join(" ")} ] 
+					${dankEmote} 
+					You won and beat the odds of 100%.
+					${deprecationWarning}
 					`
+				if (context.params.format === "json") {
+					return {
+						reply: JSON.stringify({
+							raw: reply,
+							parsed: {
+								rolledItems,
+								chance: 100,
+								win: true
+							}
+						})
+					};
+				}
+				return {
+					reply
 				};
 			}
 
@@ -141,20 +154,46 @@ module.exports = {
 				context.getBestAvailableEmote(["PagChomp", "Pog", "PogChamp"], "🎉")
 			]);
 
-			return {
-				reply: sb.Utils.tag.trim `
-					[ ${rolledItems.join(" ")} ] 
-					${pogEmote} A flush! 
-					Congratulations, you beat the odds of
-					${sb.Utils.round(chance * 100, 3)}%
-					(that is 1 in ${reverseChance})
-					${deprecationWarning}
+			const reply = sb.Utils.tag.trim `
+				[ ${rolledItems.join(" ")} ] 
+				${pogEmote} A flush! 
+				Congratulations, you beat the odds of
+				${sb.Utils.round(chance * 100, 3)}%
+				(that is 1 in ${reverseChance})
+				${deprecationWarning}
 				`
+			
+			if (context.params.format === "json") {
+				console.log('JSON WIN')
+				return {
+					reply: JSON.stringify({
+						raw: reply,
+						parsed: {
+							rolledItems,
+							win: true
+						}
+					})
+				}
+			}
+			return {
+				reply
 			};
 		}
 
+		const reply = `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`
+		if (context.params.format === "json") {
+			return {
+				reply: JSON.stringify({
+			 		raw: reply,
+			 		parsed: {
+			 			rolledItems,
+			 			win: false
+			 		}
+				})
+			}
+		}
 		return {
-			reply: `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`
+			reply
 		};
 	}),
 	Dynamic_Description: (async (prefix) => {
