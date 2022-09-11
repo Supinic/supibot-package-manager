@@ -203,7 +203,7 @@ module.exports = {
 						raw: reply,
 						parsed: {
 							quarantine: forum.quarantine,
-							fourmName: forum.name,
+							forumName: forum.name,
 							post: post.toObject()
 						}
 					})
