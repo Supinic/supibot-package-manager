@@ -2269,7 +2269,7 @@ strnum@^1.0.4:
 
 "supi-core@github:supinic/supi-core":
   version "2.2.0"
-  resolved "https://codeload.github.com/supinic/supi-core/tar.gz/f87a44c8570f18a5b1c43768051e7a8187ff5c5a"
+  resolved "https://codeload.github.com/supinic/supi-core/tar.gz/40a644ceb4c885a30410ff229cf987979ea5266a"
   dependencies:
     async-markov "github:supinic/async-markov"
     cheerio "^1.0.0-rc.12"
@@ -2293,7 +2293,7 @@ strnum@^1.0.4:
 
 "supibot-package-manager@github:supinic/supibot-package-manager":
   version "1.0.0"
-  resolved "https://codeload.github.com/supinic/supibot-package-manager/tar.gz/a77d70992557ff7014102d42cd3f25c5ac241d4c"
+  resolved "https://codeload.github.com/supinic/supibot-package-manager/tar.gz/bfc1d61929d9cdbd9828a6755bd613d9311b09eb"
 
 supports-color@8.1.1:
   version "8.1.1"
