@@ -6,8 +6,7 @@ module.exports = {
 	Description: "Once at least three unique emotes (or words) have been provided, rolls a pseudo slot machine to see if you get a flush.",
 	Flags: ["mention","pipe"],
 	Params: [
-		{ name: "pattern", type: "string" },
-		{ name: "format", type: "string" }
+		{ name: "pattern", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
@@ -104,26 +103,18 @@ module.exports = {
 		if (rolledItems.every(i => rolledItems[0] === i)) {
 			if (uniqueItems === 1) {
 				const dankEmote = await context.getBestAvailableEmote(["FeelsDankMan", "FeelsDonkMan"], "🤡");
-				const reply = sb.Utils.tag.trim `
-					[ ${rolledItems.join(" ")} ] 
-					${dankEmote} 
-					You won and beat the odds of 100%.
-					${deprecationWarning}
-					`;
-				if (context.params.format === "json") {
-					return {
-						reply: JSON.stringify({
-							raw: reply,
-							parsed: {
-								rolledItems,
-								chance: 100,
-								win: true
-							}
-						})
-					};
-				}
 				return {
-					reply
+					reply: sb.Utils.tag.trim `
+						[ ${rolledItems.join(" ")} ] 
+						${dankEmote} 
+						You won and beat the odds of 100%.
+						${deprecationWarning}
+						`,
+					parsed: JSON.stringify({
+						rolledItems,
+						chance: 100,
+						win: true
+					})
 				};
 			}
 
@@ -153,47 +144,29 @@ module.exports = {
 				row.save(),
 				context.getBestAvailableEmote(["PagChomp", "Pog", "PogChamp"], "🎉")
 			]);
-
-			const reply = sb.Utils.tag.trim `
-				[ ${rolledItems.join(" ")} ] 
-				${pogEmote} A flush! 
-				Congratulations, you beat the odds of
-				${sb.Utils.round(chance * 100, 3)}%
-				(that is 1 in ${reverseChance})
-				${deprecationWarning}
-				`;
 			
-			if (context.params.format === "json") {
-				console.log("JSON WIN");
-				return {
-					reply: JSON.stringify({
-						raw: reply,
-						parsed: {
-							rolledItems,
-							win: true
-						}
-					})
-				};
-			}
 			return {
-				reply
-			};
-		}
-
-		const reply = `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`;
-		if (context.params.format === "json") {
-			return {
-				reply: JSON.stringify({
-					raw: reply,
-					parsed: {
-						rolledItems,
-						win: false
-					}
+				reply: sb.Utils.tag.trim `
+					[ ${rolledItems.join(" ")} ] 
+					${pogEmote} A flush! 
+					Congratulations, you beat the odds of
+					${sb.Utils.round(chance * 100, 3)}%
+					(that is 1 in ${reverseChance})
+					${deprecationWarning}
+					`,
+				parsed: JSON.stringify({
+					rolledItems,
+					win: true
 				})
 			};
 		}
+
 		return {
-			reply
+			reply: `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`,
+			parsed: JSON.stringify({
+				rolledItems,
+				win: false
+			})
 		};
 	}),
 	Dynamic_Description: (async (prefix) => {
