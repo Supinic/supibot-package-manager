@@ -12,8 +12,7 @@ module.exports = {
 		{ name: "linkOnly", type: "boolean" },
 		{ name: "safeMode", type: "boolean" },
 		{ name: "showFlairs", type: "boolean" },
-		{ name: "skipGalleries", type: "boolean" },
-		{ name: "format", type: "string" }
+		{ name: "skipGalleries", type: "boolean" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
@@ -196,22 +195,14 @@ module.exports = {
 			const postString = (context.platform.Name === "discord" && post.isVideoPost)
 				? `https://reddit.com/${post.commentsUrl}`
 				: post.toString();
-			const reply = sb.Utils.fixHTML(`${symbol} r/${forum.name}: ${postString} ${commentsUrl}`);
-			if (context.params.format === "json") {
-				return {
-					reply: JSON.stringify({
-						raw: reply,
-						parsed: {
-							quarantine: forum.quarantine,
-							forumName: forum.name,
-							post: post.toObject()
-						}
-					})
-				};
-			}
-
+				
 			return {
-				reply
+				reply: sb.Utils.fixHTML(`${symbol} r/${forum.name}: ${postString} ${commentsUrl}`),
+				parsed: JSON.stringify({
+					quarantine: forum.quarantine,
+					forumName: forum.name,
+					post: post.toObject()
+				})
 			};
 		}
 	}),
