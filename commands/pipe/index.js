@@ -230,7 +230,7 @@ module.exports = {
 			}
 			else {
 				let reply = result.reply;
-				if (context.params._parsed && result.parsed != null) {
+				if (context.params._parsed && Object.keys(result).includes("parsed")) {
 					reply = result.parsed;
 				}
 
