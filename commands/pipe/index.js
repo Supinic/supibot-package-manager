@@ -9,7 +9,8 @@ module.exports = {
 		{ name: "_apos", type: "object" },
 		{ name: "_char", type: "string" },
 		{ name: "_force", type: "boolean" },
-		{ name: "_pos", type: "number" }
+		{ name: "_pos", type: "number" },
+		{ name: "_parsed", type: "boolean" }
 	],
 	Whitelist_Response: null,
 	Static_Data: (() => ({
@@ -228,7 +229,12 @@ module.exports = {
 				};
 			}
 			else {
-				const string = sb.Utils.wrapString(result.reply, this.staticData.resultCharacterLimit, {
+				let reply = result.reply;
+				if (context.params._parsed && result.parsed) {
+					reply = result.parsed;
+				}
+
+				const string = sb.Utils.wrapString(reply, this.staticData.resultCharacterLimit, {
 					keepWhitespace: true
 				});
 
