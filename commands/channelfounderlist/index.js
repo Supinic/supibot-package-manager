@@ -21,15 +21,31 @@ module.exports = {
 
 		const channel = sb.Channel.normalizeName(channelName ?? context.channel.Name);
 		const response = await sb.Got("Leppunen", `v2/twitch/founders/${channel}`);
+		const { error } = response.body;
 		if (response.statusCode === 404) {
+			if (error?.message?.includes("does not exist")) {
+				return {
+					success: false,
+					reply: `There is no such channel with that name!`
+				};
+			}
+			if (error?.message?.includes("has no founders")) {
+				return {
+					reply: error.message
+				};
+			}
+		}
+
+		const { founders } = response.body;
+		if (!founders) {
 			return {
 				success: false,
-				reply: `There is no such channel with that name!`
+				reply: "Command execution failed! Please check your input."
 			};
 		}
 
 		const separator = (context.params.subStatus) ? " " : ", ";
-		const foundersString = response.body.founders.map(i => {
+		const foundersString = founders.map(i => {
 			let message = `${i.login[0]}\u{E0000}${i.login.slice(1)}`;
 			if (context.params.subStatus) {
 				const stillSubbed = (i.isSubscribed) ? "✅" : "⛔";
