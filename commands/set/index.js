@@ -79,8 +79,6 @@ module.exports = {
 						User_To: userData.ID,
 						Platform: context.platform.ID,
 						Channel: context.channel.ID,
-						Created: new sb.Date(),
-						Active: true,
 						Schedule: null,
 						Text: message,
 						Private_Message: false
@@ -133,7 +131,7 @@ module.exports = {
 					return null;
 				}
 
-				return sb.Utils.modules.linkParser.parseLink(i);
+				return sb.Utils.modules.linkParser.parseLink(i, "auto");
 			}).filter(Boolean);
 
 			if (stringIDs.length === 0) {
@@ -236,7 +234,7 @@ module.exports = {
 							}
 							else {
 								row.values.Active = false;
-								await row.save();
+								await row.save({ skipLoad: true });
 							}
 
 							return {
@@ -338,7 +336,7 @@ module.exports = {
 								row.values.Category = "Void";
 							}
 
-							await row.save();
+							await row.save({ skipLoad: true });
 
 							return {
 								reply: `Suggestion ID ${ID} has been set as "${row.values.Status}".`
@@ -397,6 +395,7 @@ module.exports = {
 
 						const query = args.join(" ");
 						const { components, coordinates, formatted, location, placeID, success } = await sb.Utils.fetchGeoLocationData(
+							/** @type {string} */
 							sb.Config.get("API_GOOGLE_GEOCODING"),
 							query
 						);
@@ -690,6 +689,7 @@ module.exports = {
 							};
 						}
 
+						/** @type {string|undefined} */
 						const parsedLink = await sb.Query.getRecordset(rs => rs
 							.select("Link")
 							.from("data", "Twitch_Lotto")
@@ -1011,8 +1011,8 @@ module.exports = {
 			}
 		}
 	}),
-	Dynamic_Description: (async (prefix, values) => {
-		const { variables } = values.getStaticData();
+	Dynamic_Description: (async function (prefix) {
+		const { variables } = this.staticData;
 		const list = variables.map(i => {
 			let names = i.name;
 			if (i.aliases.length > 0) {
