@@ -406,9 +406,9 @@
     "@types/node" "*"
 
 "@types/node@*":
-  version "18.8.3"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.3.tgz#ce750ab4017effa51aed6a7230651778d54e327c"
-  integrity sha512-0os9vz6BpGwxGe9LOhgP/ncvYN5Tx1fNcd2TM3rD/aCGBkysb+ZWpXEocG24h6ZzOi13+VB8HndAQFezsSOw1w==
+  version "18.8.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.4.tgz#54be907698f40de8a45770b48486aa3cbd3adff7"
+  integrity sha512-WdlVphvfR/GJCLEMbNA8lJ0lhFNBj4SW3O+O5/cEGw9oYrv0al9zTwuQsq+myDUXgNx2jgBynoVgZ2MMJ6pbow==
 
 "@types/node@^17.0.10":
   version "17.0.45"
@@ -748,6 +748,15 @@ cliui@^7.0.2:
   dependencies:
     string-width "^4.2.0"
     strip-ansi "^6.0.0"
+    wrap-ansi "^7.0.0"
+
+cliui@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/cliui/-/cliui-8.0.1.tgz#0c04b075db02cbfe60dc8e6cf2f5486b1a3608aa"
+  integrity sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==
+  dependencies:
+    string-width "^4.2.0"
+    strip-ansi "^6.0.1"
     wrap-ansi "^7.0.0"
 
 clone-response@^1.0.2:
@@ -2330,7 +2339,7 @@ strnum@^1.0.4:
 
 "supi-core@github:supinic/supi-core":
   version "2.2.0"
-  resolved "https://codeload.github.com/supinic/supi-core/tar.gz/46cbcb54a3f0409c9e0bcc989661416a92adfd90"
+  resolved "https://codeload.github.com/supinic/supi-core/tar.gz/a3573d48b433512f32e12c897a2cea29d08f5212"
   dependencies:
     async-markov "github:supinic/async-markov"
     cheerio "^1.0.0-rc.12"
@@ -2354,7 +2363,7 @@ strnum@^1.0.4:
 
 "supibot-package-manager@github:supinic/supibot-package-manager":
   version "1.0.0"
-  resolved "https://codeload.github.com/supinic/supibot-package-manager/tar.gz/7bbf0583458c7faf1c2482b73a7547d5e7473ecd"
+  resolved "https://codeload.github.com/supinic/supibot-package-manager/tar.gz/9d2be18658c813d853edc3557168371c009ce1a1"
 
 supports-color@8.1.1:
   version "8.1.1"
@@ -2574,11 +2583,11 @@ yargs@16.2.0:
     yargs-parser "^20.2.2"
 
 yargs@^17.5.1:
-  version "17.5.1"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.5.1.tgz#e109900cab6fcb7fd44b1d8249166feb0b36e58e"
-  integrity sha512-t6YAJcxDkNX7NFYiVtKvWUz8l+PaKTLiL63mJYWR2GnHq2gjEWISzsLp9wg3aY36dY1j+gfIEL3pIF+XlJJfbA==
+  version "17.6.0"
+  resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.6.0.tgz#e134900fc1f218bc230192bdec06a0a5f973e46c"
+  integrity sha512-8H/wTDqlSwoSnScvV2N/JHfLWOKuh5MVla9hqLjK3nsfyy6Y4kDSYSvkU5YCUEPOSnRXfIyx3Sq+B/IWudTo4g==
   dependencies:
-    cliui "^7.0.2"
+    cliui "^8.0.1"
     escalade "^3.1.1"
     get-caller-file "^2.0.5"
     require-directory "^2.1.1"
