@@ -2415,7 +2415,7 @@ to-regex-range@^5.0.1:
 
 "track-link-parser@github:supinic/track-link-parser":
   version "1.2.0"
-  resolved "https://codeload.github.com/supinic/track-link-parser/tar.gz/4237b5a5dadfbbb716ad5a43809ea6c39d1efc0d"
+  resolved "https://codeload.github.com/supinic/track-link-parser/tar.gz/bdc350f31e6cc898e48a665f511b6481e2c49a16"
   dependencies:
     fast-xml-parser "^3.19.0"
     got "^11.8.0"
