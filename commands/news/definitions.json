@@ -238,6 +238,13 @@
         "path": "24ora",
         "endpoints": ["rss"],
         "helpers": ["noiredayz"]
+      },
+      {
+	    "name": "Portfolio",
+	    "url": "https://portfolio.hu",
+	    "path": "rss",
+	    "endpoints": ["all.xml"],
+	    "helpers": ["noiredayz"]
       }
     ]
   },
