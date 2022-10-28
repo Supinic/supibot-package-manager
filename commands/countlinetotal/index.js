@@ -9,22 +9,13 @@ module.exports = {
 	Whitelist_Response: null,
 	Static_Data: null,
 	Code: (async function countLineTotal (context) {
-		const [response, chatLineAmount, history] = await Promise.all([
+		const [response, chatLineAmount] = await Promise.all([
 			sb.Got("RaspberryPi4", { url: "ssd/size" }),
 			sb.Query.getRecordset(rs => rs
 				.select("SUM(AUTO_INCREMENT) AS Chat_Lines")
 				.from("INFORMATION_SCHEMA", "TABLES")
 				.where("TABLE_SCHEMA = %s", "chat_line")
 				.flat("Chat_Lines")
-				.single()
-			),
-			sb.Query.getRecordset(rs => rs
-				.select("Executed", "Result")
-				.from("chat_data", "Command_Execution")
-				.where("Command = %s", this.Name)
-				.where("Result <> %s", "")
-				.orderBy("Executed ASC")
-				.limit(1)
 				.single()
 			)
 		]);
@@ -34,12 +25,23 @@ module.exports = {
 		const maximumSize = sb.Config.get("DATA_DRIVE_MAXIMUM_SIZE_GB", false) ?? 220; // default size is hardcoded ~220 GB
 		const percentUsage = sb.Utils.round((currentSize / maximumSize) * 100, 2);
 
+		const cacheKey = "count-line-total-previous";
+		const history = await sb.Cache.getByPrefix(cacheKey);
 		if (history) {
-			const days = (sb.Date.now() - history.Executed) / 864.0e5;
-			const originalLines = Number(history.Result.match(/logging([\d ])+lines/)[1]);
-			const linesPerHour = sb.Utils.round((chatLineAmount - originalLines) / (days * 24), 0);
+			const days = (sb.Date.now() - history.timestamp) / 864.0e5;
+			const linesPerHour = sb.Utils.round((chatLineAmount - history.amount) / (days * 24), 0);
 
 			historyText = `Lines are added at a rate of ${sb.Utils.groupDigits(linesPerHour)} lines/hr.`;
+		}
+		else {
+			const value = {
+				timestamp: sb.Date.now(),
+				amount: chatLineAmount
+			};
+
+			await sb.Cache.setByPrefix(cacheKey, value, {
+				expiry: 365 * 864e5 // 1 year (365 days)
+			});
 		}
 
 		const cooldown = {};
@@ -50,7 +52,7 @@ module.exports = {
 		}
 		else {
 			cooldown.user = context.user.ID;
-			cooldown.channel - null;
+			cooldown.channel = null;
 			cooldown.length = this.Cooldown * 2;
 		}
 

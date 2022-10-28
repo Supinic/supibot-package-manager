@@ -9,12 +9,13 @@ module.exports = {
 		{ name: "includeRetweets", type: "boolean" },
 		{ name: "mediaOnly", type: "boolean" },
 		{ name: "random", type: "boolean" },
-		{ name: "textOnly", type: "boolean" }
+		{ name: "textOnly", type: "boolean" },
+		{ name: "trends", type: "string" }
 	],
 	Whitelist_Response: null,
 	Static_Data: null,
 	Code: (async function twitter (context, user) {
-		if (!user) {
+		if (!user && !context.params.trends) {
 			return {
 				success: false,
 				reply: "No user provided!"
@@ -50,6 +51,100 @@ module.exports = {
 			});
 		}
 
+		if (context.params.trends) {
+			let locationsData = await this.getCacheData("trends-locations");
+			if (!locationsData) {
+				const response = await sb.Got("GenericAPI", {
+					method: "GET",
+					url: "https://api.twitter.com/1.1/trends/available.json",
+					responseType: "json",
+					throwHttpErrors: false,
+					headers: {
+						Authorization: `Bearer ${bearerToken}`
+					}
+				});
+
+				locationsData = response.body.map(i => ({
+					name: i.name,
+					woeid: i.woeid,
+					country: {
+						name: i.country,
+						code: i.countryCode
+					},
+					type: {
+						/**
+						 * 7 - Town (Toronto)
+						 * 9 - Unknown (Ahsa)
+						 * 12 - Country (Australia)
+						 * 19 - Supername (Worldwide)
+						 * 22 - Unknown (Soweto)
+						 */
+						code: i.placeType.code,
+						name: i.placeType.name
+					}
+				}));
+
+				await this.setCacheData("trends-locations", locationsData, {
+					expiry: 30 * 864e5 // 30 days
+				});
+			}
+
+			// Only support countries (for now) - ignores city-related trends
+			const input = context.params.trends;
+			const countryData = await sb.Query.getRecordset(rs => rs
+				.select("Code_Alpha_2 AS Code")
+				.select("Name")
+				.from("data", "Country")
+				.where("Name = %s OR Code_Alpha_2 = %s OR Code_Alpha_3 = %s", input, input, input)
+				.single()
+				.limit(1)
+			);
+
+			if (!countryData) {
+				return {
+					success: false,
+					reply: `Could not match your query to a country!`
+				};
+			}
+
+			const match = locationsData.find(i => i.type.name === "Country" && i.country.code === countryData.Code);
+			if (!match) {
+				return {
+					success: false,
+					reply: `${countryData.Name} is not supported by Twitter Trends!`
+				};
+			}
+
+			const response = await sb.Got("GenericAPI", {
+				method: "GET",
+				url: "https://api.twitter.com/1.1/trends/place.json",
+				responseType: "json",
+				throwHttpErrors: false,
+				headers: {
+					Authorization: `Bearer ${bearerToken}`
+				},
+				searchParams: {
+					id: match.woeid
+				}
+			});
+
+			const { trends } = response.body[0];
+			const trendsString = trends.slice(0, 10)
+				.sort((a, b) => (b.tweet_volume ?? 0) - (a.tweet_volume ?? 0))
+				.map(i => {
+					const volume = (i.tweet_volume)
+						? sb.Utils.groupDigits(i.tweet_volume)
+						: "N/A";
+
+					return `${i.name} (${volume} tweets)`;
+				})
+				.join("; ");
+
+			return {
+				reply: `Current top 10 Twitter trends for ${match.name}: ${trendsString}.`
+			};
+		}
+
 		// necessary to fetch - deleted/suspended tweets take up space in the slice
 		const limit = (context.params.random) ? "200" : "100";
 		const response = await sb.Got("GenericAPI", {
@@ -83,6 +178,7 @@ module.exports = {
 			};
 		}
 
+		/** @type {Object[]} */
 		let eligibleTweets = response.body;
 		if (!Array.isArray(eligibleTweets)) {
 			await sb.Logger.log("Command.Warning", JSON.stringify({
@@ -163,6 +259,13 @@ module.exports = {
 		`<code>${prefix}tweet (account)</code>`,
 		`<code>${prefix}twitter (account)</code>`,
 		"Gets the last tweet.",
+		"",
+
+		`<code>${prefix}twitter trends:(location)</code>`,
+		`<code>${prefix}twitter trends:France</code>`,
+		`<code>${prefix}twitter trends:PL</code>`,
+		`<code>${prefix}twitter trends:"United Arab Emirates"</code>`,
+		"Fetches the top 10 trending hashtags for a given country, either as full name or code.",
 		"",
 
 		`<code>${prefix}twitter random:true (account)</code>`,

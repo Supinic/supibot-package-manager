@@ -1,5 +1,9 @@
+const defaultChannelId = 38;
+
 const fetchSubscriptionUsers = async function (subType, lastSeenThreshold = 36e5) {
+	/** @type {Object[]} */
 	const users = await sb.Query.getRecordset(rs => rs
+		.select("Event_Subscription.Channel as Reminder_Channel")
 		.select("Event_Subscription.User_Alias AS ID")
 		.select("User_Alias.Name AS Username")
 		.select("MAX(Meta.Last_Message_Posted) AS Last_Seen")
@@ -33,7 +37,6 @@ const createReminders = async function (users, message) {
 			User_To: user.ID,
 			Text: `${message} (you were not around when it was announced)`,
 			Schedule: null,
-			Created: new sb.Date(),
 			Private_Message: true,
 			Platform: 1
 		}, true)
@@ -45,11 +48,52 @@ const handleSubscription = async function (subType, message, options = {}) {
 
 	await createReminders(inactiveUsers, message);
 
-	const chatPing = activeUsers.map(i => `@${i.Username}`).join(" ");
-	const targetChannel = sb.Channel.get(options.targetChannel ?? 38);
-	await targetChannel.send(`${chatPing} ${message}`);
+	const channelUsers = {};
+	for (const activeUser of activeUsers) {
+		const channelID = activeUser.Reminder_Channel ?? defaultChannelId;
+		channelUsers[channelID] ??= [];
+		channelUsers[channelID].push(activeUser);
+	}
+
+	for (const [channelID, userDataList] of Object.entries(channelUsers)) {
+		const chatPing = userDataList.map(i => `@${i.Username}`).join(" ");
+		const channelData = sb.Channel.get(Number(channelID));
+
+		await channelData.send(`${chatPing} ${message}`);
+	}
+};
+
+const parseRssNews = async function (xml, cacheKey) {
+	const feed = await sb.Utils.parseRSS(xml);
+	const lastPublishDate = await sb.Cache.getByPrefix(cacheKey) ?? 0;
+	const eligibleArticles = feed.items
+		.filter(i => new sb.Date(i.pubDate) > lastPublishDate)
+		.sort((a, b) => new sb.Date(b.pubDate) - new sb.Date(a.pubDate));
+
+	if (eligibleArticles.length === 0) {
+		return null;
+	}
+
+	const [topArticle] = eligibleArticles;
+	await sb.Cache.setByPrefix(cacheKey, new sb.Date(topArticle.pubDate).valueOf(), {
+		expiry: 7 * 864e5 // 7 days
+	});
+
+	// Skip posting too many articles if it's the first time running
+	if (eligibleArticles.length > 1 && lastPublishDate === 0) {
+		return null;
+	}
+
+	const result = [];
+	for (const article of eligibleArticles) {
+		const { link, title } = article;
+		result.push(`${title} ${link}`);
+	}
+
+	return result;
 };
 
 module.exports = {
-	handleSubscription
+	handleSubscription,
+	parseRssNews
 };
