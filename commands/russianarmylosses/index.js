@@ -9,26 +9,28 @@ module.exports = {
 		{ name: "term", type: "string" }
 	],
 	Whitelist_Response: null,
-	Static_Data: null,
-	Code: (async function russianArmyLosses(context) {
+	Static_Data: (() => ({
 		// While this data is provided by the API (https://russianwarship.rip/api-documentation/v1#/Terms/getAllStatisticalTerms),
 		// some of the names are too long for chat and have been shortened.
-		const terms = {
-			"personnel_units": "Personnel",
-			"tanks": "Tanks",
-			"armoured_fighting_vehicles": "Combat vehicles",
-			"artillery_systems": "Artillery",
-			"mlrs": "MLRS",
-			"aa_warfare_systems": "AA",
-			"planes": "Planes",
-			"helicopters": "Helicopters",
-			"vehicles_fuel_tanks": "Vehicles/Fuel tanks",
-			"warships_cutters": "Ships",
-			"cruise_missiles": "Missiles",
-			"uav_systems": "UAV",
-			"special_military_equip": "Special equipment",
-			"atgm_srbm_systems": "ATGM/SRBM"
-		};
+		terms: {
+			personnel_units: "Personnel",
+			tanks: "Tanks",
+			armoured_fighting_vehicles: "Combat vehicles",
+			artillery_systems: "Artillery",
+			mlrs: "MLRS",
+			aa_warfare_systems: "AA",
+			planes: "Planes",
+			helicopters: "Helicopters",
+			vehicles_fuel_tanks: "Vehicles/Fuel tanks",
+			warships_cutters: "Ships",
+			cruise_missiles: "Missiles",
+			uav_systems: "UAV",
+			special_military_equip: "Special equipment",
+			atgm_srbm_systems: "ATGM/SRBM"
+		}
+	})),
+	Code: (async function russianArmyLosses(context) {
+		const terms = this.staticData.terms;
 		const { term } = context.params;
 
 		const response = await sb.Got("GenericAPI", {
