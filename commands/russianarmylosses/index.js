@@ -29,7 +29,7 @@ module.exports = {
 			atgm_srbm_systems: "ATGM/SRBM"
 		}
 	})),
-	Code: (async function russianArmyLosses(context) {
+	Code: (async function russianArmyLosses (context) {
 		const terms = this.staticData.terms;
 		const { term } = context.params;
 
@@ -40,39 +40,41 @@ module.exports = {
 			prefixUrl: "https://russianwarship.rip/api/v1",
 			url: "statistics/latest"
 		});
-		const data = response.body["data"];
-		const stats = data["stats"];
-		const increase = data["increase"];
+		const data = response.body.data;
+		const stats = data.stats;
+		const increase = data.increase;
 
 		let reply;
 		if (term) {
 			let key;
 			for (const termKey in terms) {
-				if (terms[termKey].toLowerCase() == term.toLowerCase()) {
+				if (terms[termKey].toLowerCase() === term.toLowerCase()) {
 					key = termKey;
-					break
+					break;
 				}
 			}
 
 			if (key) {
 				reply = `Latest Russian Army losses for ${term}: ${stats[key]}`;
 				const statsIncrease = increase[key];
-				if (statsIncrease != 0) {
+				if (statsIncrease !== 0) {
 					reply += `(+${statsIncrease})`;
 				}
-			} else {
+			}
+			else {
 				return {
 					success: false,
 					reply: `An invalid term has been provided!`
 				};
 			}
-		} else {
+		}
+		else {
 			reply = "Latest Russian Army losses: ";
 			for (const key in stats) {
 				const term = terms[key] ? terms[key] : key; // In case there is a new term
 				reply += `${term}: ${stats[key]}`;
 				const statsIncrease = increase[key];
-				if (statsIncrease != 0) {
+				if (statsIncrease !== 0) {
 					reply += `(+${statsIncrease})`;
 				}
 				reply += ", ";
