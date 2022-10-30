@@ -35,7 +35,7 @@ module.exports = {
 			responseType: "json",
 			url: "https://russianwarship.rip/api/v1/statistics/latest"
 		});
- 		const { increase, stats } = response.body.data;
+		const { increase, stats } = response.body.data;
 
 		let reply;
 		if (term) {
@@ -67,7 +67,7 @@ module.exports = {
 				const term = terms[key] ? terms[key] : key; // In case there is a new term
 				let msg = `${term}: ${stats[key]}`;
 				const statsIncrease = increase[key];
-				if (statsIncrease != 0) {
+				if (statsIncrease !== 0) {
 					msg += `(+${statsIncrease})`;
 				}
 				return msg;
