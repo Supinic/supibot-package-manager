@@ -5,9 +5,7 @@ module.exports = {
 	Cooldown: 15000,
 	Description: "Fetches the latest losses of the Russian Army in Ukraine as provided by the General Staff of Ukraine.",
 	Flags: ["mention", "non-nullable", "pipe"],
-	Params: [
-		{ name: "term", type: "string" }
-	],
+	Params: null,
 	Whitelist_Response: null,
 	Static_Data: (() => ({
 		// While this data is provided by the API (https://russianwarship.rip/api-documentation/v1#/Terms/getAllStatisticalTerms),
@@ -29,20 +27,15 @@ module.exports = {
 			atgm_srbm_systems: "ATGM/SRBM"
 		}
 	})),
-	Code: (async function russianArmyLosses (context) {
+	Code: (async function russianArmyLosses (context, ...args) {
 		const terms = this.staticData.terms;
-		const { term } = context.params;
+		let term = args[0]; // This is mutable so it can be overwritten by a term with proper capitalization (user input is case-insensitive)
 
 		const response = await sb.Got("GenericAPI", {
 			responseType: "json",
-			throwHttpErrors: false,
-
-			prefixUrl: "https://russianwarship.rip/api/v1",
-			url: "statistics/latest"
+			url: "https://russianwarship.rip/api/v1/statistics/latest"
 		});
-		const data = response.body.data;
-		const stats = data.stats;
-		const increase = data.increase;
+ 		const { increase, stats } = response.body.data;
 
 		let reply;
 		if (term) {
@@ -50,6 +43,7 @@ module.exports = {
 			for (const termKey in terms) {
 				if (terms[termKey].toLowerCase() === term.toLowerCase()) {
 					key = termKey;
+					term = terms[termKey];
 					break;
 				}
 			}
@@ -69,17 +63,16 @@ module.exports = {
 			}
 		}
 		else {
-			reply = "Latest Russian Army losses: ";
-			for (const key in stats) {
+			const replyParts = Object.keys(stats).map(key => {
 				const term = terms[key] ? terms[key] : key; // In case there is a new term
-				reply += `${term}: ${stats[key]}`;
+				let msg = `${term}: ${stats[key]}`;
 				const statsIncrease = increase[key];
-				if (statsIncrease !== 0) {
-					reply += `(+${statsIncrease})`;
+				if (statsIncrease != 0) {
+					msg += `(+${statsIncrease})`;
 				}
-				reply += ", ";
-			}
-			reply = reply.slice(0, -2);
+				return msg;
+			});
+			reply = `Latest Russian Army losses: ${replyParts.join(", ")}`;
 		}
 
 
