@@ -15,6 +15,11 @@ describe("valid RSS news definitions", function () {
 
 			for (const source of sources) {
 				describe(source.name, function () {
+					assert.strictEqual(source.url.endsWith("/"), false, "Main URL part must not have a trailing slash");
+					if (source.path) {
+						assert.strictEqual(source.path.endsWith("/"), false, "Secondary URL path must not have a trailing slash");
+					}
+
 					const urls = source.endpoints.map(endpoint => (
 						[source.url, source.path, endpoint].filter(Boolean).join("/")
 					));
