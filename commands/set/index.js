@@ -1042,7 +1042,7 @@ module.exports = {
 				(i.unset) ? "unset" : ""
 			].filter(Boolean).join("/");
 
-			let noPipeInfo = (i.pipe) ? "" : ", cannot be piped";
+			const noPipeInfo = (i.pipe) ? "" : ", cannot be piped";
 
 			return `<li><code>${names}</code> (${types}${noPipeInfo}) ${i.description}</li>`;
 		}).join("");
