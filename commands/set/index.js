@@ -358,7 +358,7 @@ module.exports = {
 					aliases: [],
 					parameter: "arguments",
 					description: `Sets/unsets your IRL location. If you add the keyword "private", it's going to be hidden. This location is used in commands such as weather, time, and others.`,
-					pipe: true,
+					pipe: false,
 					set: async (context, ...args) => {
 						let hidden = false;
 						let visibilityType = null;
@@ -513,7 +513,7 @@ module.exports = {
 					aliases: ["bday"],
 					parameter: "arguments",
 					description: "Lets you set your birthday (only day and month!) for use in other commands, like $horoscope. Use the MM-DD format (05-01 for May 1st), or \"may 1\", or \"1 may\".",
-					pipe: true,
+					pipe: false,
 					set: async (context, ...args) => {
 						const query = args.join(" ");
 						if (!query) {
