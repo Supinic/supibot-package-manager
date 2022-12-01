@@ -1,0 +1,36 @@
+{
+  "types": [
+    {
+      "name": "simple-replacement",
+      "parameters": {
+        "replacee": ["string", "regex"],
+        "replacement": ["string"]
+      }
+    },
+    {
+      "name": "advanced-replacement",
+      "parameters": {
+        "replacee": ["string", "regex", "function"],
+        "replacer": ["function"]
+      }
+    },
+    {
+      "name": "count-change",
+      "parameters": {
+        "query": ["string", "regex"],
+        "count": ["number"],
+        "change": ["string"],
+        "appendix": ["string"]
+      }
+    },
+    {
+      "name": "dictionary",
+      "parameters": {
+        "minimumSkipLength": ["number"],
+        "longMessageThreshold": ["number"],
+        "longMessageRatio": ["number"],
+        "messageRatio": ["number"]
+      }
+    }
+  ]
+}
