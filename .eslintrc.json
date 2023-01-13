@@ -61,7 +61,7 @@
     }],
     "new-parens": ["error", "always"],
     "newline-per-chained-call": ["warn", {
-      "ignoreChainWithDepth": 3
+      "ignoreChainWithDepth": 5
     }],
     "no-console": "off",
     "no-control-regex": "off",
