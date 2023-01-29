@@ -10,6 +10,7 @@ describe("global module suite", () => {
 			name: "commands",
 			singular: "command",
 			directory: "commands",
+			extension: "js",
 			fileList: fs.readdirSync("./commands", { withFileTypes: true })
 				.filter(i => i.isDirectory())
 				.map(i => i.name),
@@ -21,6 +22,7 @@ describe("global module suite", () => {
 			name: "chat modules",
 			singular: "chat module",
 			directory: "chat-modules",
+			extension: "mjs",
 			fileList: fs.readdirSync("./chat-modules", { withFileTypes: true })
 				.filter(i => i.isDirectory())
 				.map(i => i.name),
@@ -31,6 +33,7 @@ describe("global module suite", () => {
 			name: "crons",
 			singular: "cron",
 			directory: "crons",
+			extension: "js",
 			fileList: fs.readdirSync("./crons", { withFileTypes: true })
 				.filter(i => i.isDirectory())
 				.map(i => i.name),
@@ -40,9 +43,10 @@ describe("global module suite", () => {
 	];
 
 	for (const specificModule of modules) {
+		const { extension } = specificModule;
 		specificModule.definitions = specificModule.fileList.map(dir => ({
 			name: dir,
-			content: fs.readFileSync(`./${specificModule.directory}/${dir}/index.js`)
+			content: fs.readFileSync(`./${specificModule.directory}/${dir}/index.${extension}`)
 		}));
 	}
 
@@ -66,22 +70,42 @@ describe("global module suite", () => {
 						equal(model.sourceType, "module", "Script must be sourced by a module");
 						equal(model.body.constructor, Array, "Module body must be an array");
 						equal(model.body.length, 1, "Module can only contain one statement");
-						equal(model.body[0].type, "ExpressionStatement", "Statement must be an expression");
 
-						const expr = model.body[0].expression;
-						equal(expr.type, "AssignmentExpression", "Statement must be an assignment expression");
-						equal(expr.operator, "=", "Statement must use the = operator");
+						let properties;
+						if (module.extension === "js") {
+							equal(model.body[0].type, "ExpressionStatement", "Statement must be an expression");
 
-						const { left, right } = expr;
-						equal(left.computed, false, "Left side of assignment cannot be computed");
-						equal(left.object.name, "module", "Assignment must be done to module.exports");
-						equal(left.object.type, "Identifier", "Assignment must be done to module.exports");
-						equal(left.property.name, "exports", "Assignment must be done to module.exports");
-						equal(right.type, "ObjectExpression", "Right side of assignment must be an object expression");
+							const expr = model.body[0].expression;
+							equal(expr.type, "AssignmentExpression", "Statement must be an assignment expression");
+							equal(expr.operator, "=", "Statement must use the = operator");
+
+							const { left, right } = expr;
+							equal(left.computed, false, "Left side of assignment cannot be computed");
+							equal(left.object.name, "module", "Assignment must be done to module.exports");
+							equal(left.object.type, "Identifier", "Assignment must be done to module.exports");
+							equal(left.property.name, "exports", "Assignment must be done to module.exports");
+							equal(right.type, "ObjectExpression", "Right side of assignment must be an object expression");
+
+							properties = right.properties;
+						}
+						else {
+							equal(model.body[0].type, "ExportNamedDeclaration", "Statement must be a named exports declaration");
+
+							const { declaration } = model.body[0];
+							equal(declaration.type, "VariableDeclaration", "Exports declaration must be a variable");
+							equal(declaration.kind, "const", "Exports declaration must be const");
+
+							const { declarations } = declaration;
+							equal(declarations.length, 1, "Exactly one declaration must be exported");
+
+							const { id, init } = declarations[0];
+							equal(id.name, "definition", "Declared variable must be named \"definition\"");
+							equal(init.type, "ObjectExpression", "Declared variable must be an object expression");
+
+							properties = init.properties;
+						}
 
 						const foundProperties = new Set();
-						const { properties } = model.body[0].expression.right;
-
 						for (const item of properties) {
 							if (item.computed === true) {
 								throw new Error(`computed expressions are not allowed`);
