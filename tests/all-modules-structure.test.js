@@ -33,7 +33,7 @@ describe("global module suite", () => {
 			name: "crons",
 			singular: "cron",
 			directory: "crons",
-			extension: "js",
+			extension: "mjs",
 			fileList: fs.readdirSync("./crons", { withFileTypes: true })
 				.filter(i => i.isDirectory())
 				.map(i => i.name),
