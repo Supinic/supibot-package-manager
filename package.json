@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "test": "mocha \"./@(chat-modules|commands|crons)/**/*.test.js\" ./tests/**/*.test.js  --exit",
+    "test": "mocha \"./@(chat-modules|commands|crons)/**/*.test.js\" ./structure-test/structure.test.js  --exit",
     "test-news": "mocha ./separate-tests/news-definitions.test.js --exit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
