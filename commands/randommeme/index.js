@@ -212,9 +212,14 @@ module.exports = {
 			const postString = (context.platform.Name === "discord" && post.isVideoPost)
 				? `https://reddit.com/${post.commentsUrl}`
 				: post.toString();
-
+				
 			return {
-				reply: sb.Utils.fixHTML(`${symbol} r/${forum.name}: ${postString} ${commentsUrl}`)
+				reply: sb.Utils.fixHTML(`${symbol} r/${forum.name}: ${postString} ${commentsUrl}`),
+				parsed: JSON.stringify({
+					quarantine: forum.quarantine,
+					forumName: forum.name,
+					post: post.toObject()
+				})
 			};
 		}
 	}),

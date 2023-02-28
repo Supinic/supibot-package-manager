@@ -100,7 +100,6 @@ module.exports = {
 
 			uniqueItems = emotes.filter((i, ind, arr) => arr.indexOf(i) === ind).length;
 		}
-
 		if (rolledItems.every(i => rolledItems[0] === i)) {
 			if (uniqueItems === 1) {
 				const dankEmote = await context.getBestAvailableEmote(["FeelsDankMan", "FeelsDonkMan"], "🤡");
@@ -110,7 +109,12 @@ module.exports = {
 						${dankEmote} 
 						You won and beat the odds of 100%.
 						${deprecationWarning}
-					`
+						`,
+					parsed: JSON.stringify({
+						rolledItems,
+						chance: 100,
+						win: true
+					})
 				};
 			}
 
@@ -140,7 +144,7 @@ module.exports = {
 				row.save(),
 				context.getBestAvailableEmote(["PagChomp", "Pog", "PogChamp"], "🎉")
 			]);
-
+			
 			return {
 				reply: sb.Utils.tag.trim `
 					[ ${rolledItems.join(" ")} ] 
@@ -149,12 +153,20 @@ module.exports = {
 					${sb.Utils.round(chance * 100, 3)}%
 					(that is 1 in ${reverseChance})
 					${deprecationWarning}
-				`
+					`,
+				parsed: JSON.stringify({
+					rolledItems,
+					win: true
+				})
 			};
 		}
 
 		return {
-			reply: `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`
+			reply: `[ ${rolledItems.join(" ")} ] ${deprecationWarning}`,
+			parsed: JSON.stringify({
+				rolledItems,
+				win: false
+			})
 		};
 	}),
 	Dynamic_Description: (async function (prefix) {

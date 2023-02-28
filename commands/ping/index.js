@@ -98,7 +98,8 @@ module.exports = {
 		}
 
 		return {
-			reply: `${pong} ${Object.entries(data).map(([name, value]) => `${name}: ${value}`).join("; ")}`
+			reply: `${pong} ${Object.entries(data).map(([name, value]) => `${name}: ${value}`).join("; ")}`,
+			parsed: JSON.stringify(data)
 		};
 	}),
 	Dynamic_Description: (async (prefix) => [
